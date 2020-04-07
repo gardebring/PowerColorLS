@@ -5,7 +5,7 @@ A PowerShell module that displays a colorized directory and file listing with ic
 ## Overview
 
 *PowerColorLS* is a PowerShell module that displays a colorized directory and file listing with icons in the terminal.
-For the module to work, you must first install [Terminal-Icons](https://raw.githubusercontent.com/devblackops/Terminal-Icons/) and setup the [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts)
+For the module to work, you must first install [Terminal-Icons](https://github.com/devblackops/Terminal-Icons/) and setup the [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts/)
 
 ## Usage
 From the root directory, run:
