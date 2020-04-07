@@ -14,6 +14,36 @@ import-module PowerColorLS
 PowerColorLS
 ```
 
+## Help
+To get help about available arguments, run:
+```powershell
+PowerColorLS --help
+Usage: PowerColorLs [OPTION]... [FILE]...
+List information about files and directories (the current directory by default).
+Entries will be sorted alphabetically if no sorting option is specified.
+
+        -a, --all               do not ignore hidden files and files starting with .
+        -l, --long              use a long listing format
+        -1                      list one file per line
+        -d, --dirs              show only directories
+        -f, --files             show only files
+        -ds, --ds, -sds, --sds, --show-directory-size
+                                show directory size (can take a long time)
+
+sorting options:
+
+        -sd, --sd, --sort-dirs, --group-directories-first
+                                sort directories first
+        -sf, --sf, --sort-files, --group-files-first
+                                sort files first
+        -t, -st, --st
+                                sort by modification time, newest first
+
+general options:
+
+        -h, --h, --help         prints this help
+```
+
 ## Alias to ls
 ```powershell
 Set-Alias -Name ls -Value PowerColorLS -Option AllScope
