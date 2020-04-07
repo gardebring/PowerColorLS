@@ -2,7 +2,7 @@
 
 A PowerShell module that displays a colorized directory and file listing with icons. Inspired by [colorls](https://github.com/athityakumar/colorls)
 
-(./media/screens/powercolorls.png)
+![Screenshot 1](./media/screens/powercolorls.png)
 
 ## Overview
 
