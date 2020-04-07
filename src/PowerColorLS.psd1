@@ -26,7 +26,11 @@ CompanyName = 'Unknown'
 Copyright = 'Copyright (c) 2020 Anders Gardebring'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'List information about files and directories (the current directory by default).
+Entries will be sorted alphabetically if no sorting option is specified.
+The directories and files will be displayed with an icon and color scheme.
+The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/) 
+being installed and configured first.'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''
