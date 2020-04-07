@@ -191,6 +191,11 @@ function PowerColorLS{
         $filesAndFolders = Get-ChildItem $query
     }
 
+    if($filesAndFolders.Length -eq 0){
+        # nothing found
+        return
+    }
+
     # sorting
     if($option_sortByModificationTime){
         $filesAndFolders = $filesAndFolders  | Sort Lastwritetime -descending 
