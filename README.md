@@ -18,6 +18,10 @@ PowerColorLS
 To get help about available arguments, run:
 ```powershell
 PowerColorLS --help
+```
+
+Output of help command:
+```
 Usage: PowerColorLs [OPTION]... [FILE]...
 List information about files and directories (the current directory by default).
 Entries will be sorted alphabetically if no sorting option is specified.
