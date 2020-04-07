@@ -42,7 +42,7 @@ function Get-FriendlySize {
     "{0:N$($N)} {1}" -f $Bytes, $sizes[$i]
 }
 
-function PowerColorLs{
+function PowerColorLS{
 <#
  .Synopsis
   Displays a colorized directory and file listing with icons.

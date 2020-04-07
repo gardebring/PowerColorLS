@@ -8,7 +8,7 @@ A PowerShell module that displays a colorized directory and file listing with ic
 For the module to work, you must first install [Terminal-Icons](https://github.com/devblackops/Terminal-Icons/) and setup the [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts/)
 
 ## Usage
-From the root directory, run:
+From the src directory, run:
 ```powershell
 import-module PowerColorLS
 PowerColorLS
