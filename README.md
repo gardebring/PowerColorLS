@@ -15,14 +15,27 @@ To install the module from the [PowerShell Gallery](https://www.powershellgaller
 Install-Module -Name PowerColorLS -Repository PSGallery
 ```
 
-## Usage
+## Example usage
 ```powershell
 Import-Module PowerColorLS
 PowerColorLS
-PowerColorLS -l
-PowerColorLS *.txt -l -a
-PowerColorLS -h
 ```
+
+List all files and directories including hidden ones and ones starting with '.' in long listing (wide) format
+```powershell
+PowerColorLS -l
+```
+![Screenshot 2](./media/screens/powercolorls_a_l.png)
+List all files and directories including hidden ones and ones starting with '.' in long listing (wide) format and also include directory size
+```powershell
+PowerColorLS -l
+```
+![Screenshot 3](./media/screens/powercolorls_a_l_show_directory_size.png)
+List files only, followed by list directories only
+```powershell
+PowerColorLS -l
+```
+![Screenshot 4](./media/screens/powercolorls_f_d.png)
 
 ## Help
 To get help about available arguments, run:
