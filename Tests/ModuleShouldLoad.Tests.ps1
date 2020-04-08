@@ -9,4 +9,13 @@ Describe "Importing" {
             $warn | Should be $false
         }
     }
+
+    Context "When module definition is being imported" {
+        It "Should not have any warnings" {
+            $warn = $false
+            $out = (powershell -noprofile "Import-Module $ROOT\..\src\PowerColorLS.psd1")
+            $out | % { $warn = $warn -or ($_ -Match "WARNING") }
+            $warn | Should be $false
+        }
+    }
 }

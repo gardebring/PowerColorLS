@@ -29,7 +29,7 @@ Copyright = 'Copyright (c) 2020 Anders Gardebring'
 Description = 'List information about files and directories (the current directory by default).
 Entries will be sorted alphabetically if no sorting option is specified.
 The directories and files will be displayed with an icon and color scheme.
-The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/) 
+The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/)
 being installed and configured first.'
 
 # Minimum version of the PowerShell engine required by this module
@@ -72,13 +72,13 @@ being installed and configured first.'
 FunctionsToExport = 'PowerColorLS'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = '*'
+#VariablesToExport = '*'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+AliasesToExport = @()
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()

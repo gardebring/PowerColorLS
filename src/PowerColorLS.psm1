@@ -33,7 +33,8 @@ function Show-Help{
     Write-Host "`t-h, --help`t`tprints this help"
 }
 
-function Get-Options([array] $arguments){
+function Get-OptionsResult{
+    Param([array] $arguments)
     $options = @{
         oneEntryPerLine = $false
         showHiddenFiles = $false
@@ -116,15 +117,16 @@ function Get-Options([array] $arguments){
 }
 
 function Get-FriendlySize {
-    param($Bytes)
+    param($bytes)
     $sizes='B,KB,MB,GB,TB,PB,EB,ZB' -split ','
-    for($i=0; ($Bytes -ge 1kb) -and
-        ($i -lt $sizes.Count); $i++) {$Bytes/=1kb}
+    for($i=0; ($bytes -ge 1kb) -and
+        ($i -lt $sizes.Count); $i++) {$bytes/=1kb}
     $N=0; if($i -eq 0) {$N=0}
-    "{0:N$($N)} {1}" -f $Bytes, $sizes[$i]
+    "{0:N$($N)} {1}" -f $bytes, $sizes[$i]
 }
 
-function Get-FilesAndFolders($options, $query){
+function Get-FilesAndFoldersListing{
+    Param($options, $query)
     if($options.showHiddenFiles){
         return (Get-ChildItem $query -force)
     }else{
@@ -132,7 +134,8 @@ function Get-FilesAndFolders($options, $query){
     }
 }
 
-function Get-SortedFilesAndFolders($filesAndFolders, $options){
+function Get-SortedFilesAndFoldersListing{
+    Param($filesAndFolders, $options)
     if($options.sortByModificationTime){
         return $filesAndFolders  | Sort-Object Lastwritetime -descending
     }elseif($options.filesFirst){
@@ -144,7 +147,8 @@ function Get-SortedFilesAndFolders($filesAndFolders, $options){
     }
 }
 
-function Get-ItemColor($isFolder, $name, $fileExt){
+function Get-ItemColor{
+    Param($isFolder, $name, $fileExt)
     if($isFolder){
         $colorHex = $colorTheme.Types.Directories.WellKnown[$name]
         if($null -eq $colorHex){
@@ -162,7 +166,8 @@ function Get-ItemColor($isFolder, $name, $fileExt){
     return ConvertFrom-RGBColor -RGB ($colorHex)
 }
 
-function Get-ItemIcon($isFolder, $name, $fileExt){
+function Get-ItemIcon{
+    Param($isFolder, $name, $fileExt)
     if($isFolder){
         $iconName = $iconTheme.Types.Directories.WellKnown[$name]
         if($null -eq $iconName){
@@ -180,7 +185,33 @@ function Get-ItemIcon($isFolder, $name, $fileExt){
     return $glyphs[$iconName]
 }
 
-function Get-ModeForLongListing($modeInput){
+function Get-LongFormatData{
+    Param($options, $filesAndFolders)
+    if($options.longFormat){
+        $acls = $filesAndFolders | get-acl -ErrorAction SilentlyContinue
+
+        $longestOwnerAcl = ($acls | Select-Object Owner | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Owner
+
+        $longestGroupAcl = ($acls | Select-object Group | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Group
+
+        $longestDate = ($filesAndFolders | Select-Object @{n="LastWriteTime";e={$_.Lastwritetime.ToString("f")}} | Sort-Object { "$_".Length } -descending | Select-Object -first 1).LastWriteTime
+
+        return @{
+            longestOwnerAclLength = $longestOwnerAcl.Length
+            longestGroupAclLength = $longestGroupAcl.Length
+            longestDateLength = $longestDate.Length
+            # Calculate max lengths of different long outputs so we can determine how much will fit in the console
+            fullItemMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + $longestGroupAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
+            noGroupMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
+            noGroupOrOwnerMaxLength = 11 + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
+            noGroupOrOwnerOrModeMaxLength = 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
+        }
+    }
+    return $null
+}
+
+function Get-ModeForLongListing{
+    Param($modeInput)
     $mode = ""
     foreach ($m in $modeInput.ToCharArray()) {
         switch($m){
@@ -248,39 +279,39 @@ function PowerColorLS{
 
  .Example
    # Show help
-   Get-ColorizedDirectoryListing -h
+   PowerColorLS -h
 
  .Example
    # Show a lising of all files and directories in the current location sorted by name
-   Get-ColorizedDirectoryListing
+   PowerColorLS
 
  .Example
    # Show a lising of all files and directories in c:\test sorted by directories first
-   Get-ColorizedDirectoryListing -sd c:\test
+   PowerColorLS -sd c:\test
 
  .Example
    # Show a lising of all files and directories matching *name* in the current location sorted by files first
-   Get-ColorizedDirectoryListing -sf *name*
+   PowerColorLS -sf *name*
 
  .Example
    # Show a lising of all files and directories in the current location, including hidden files
-   Get-ColorizedDirectoryListing --all
+   PowerColorLS --all
 
  .Example
    # Show a lising of all files and directories in the current location, including hidden files, sorted by modification time
-   Get-ColorizedDirectoryListing --all -t
+   PowerColorLS --all -t
 
  .Example
    # Show a lising of all files and directories in the current location in a long format
-   Get-ColorizedDirectoryListing --long
+   PowerColorLS --long
 
  .Example
    # Show a lising of all files and directories in the current location in a long format including directory size
-   Get-ColorizedDirectoryListing --long --show-directory-size
+   PowerColorLS --long --show-directory-size
 
 #>
 
-    $get_optionsResult = Get-Options $args
+    $get_optionsResult = Get-OptionsResult -arguments $args
 
     if($get_optionsResult.continue -eq $false){
         if($null -ne $get_optionsResult.errorMessage){
@@ -296,14 +327,14 @@ function PowerColorLS{
     $options = $get_optionsResult.options
 
     # get the items
-    $filesAndFolders = Get-FilesAndFolders $options $query
+    $filesAndFolders = Get-FilesAndFoldersListing -options $options -query $query
 
     if($filesAndFolders.Length -eq 0){ # nothing found
         return
     }
 
     # sorting
-    $filesAndFolders = Get-SortedFilesAndFolders $filesAndFolders $options
+    $filesAndFolders = Get-SortedFilesAndFoldersListing -filesAndFolders $filesAndFolders -options $options
 
     # determine the longest items so we can adapt the list to the console window width
     $longestItem = $filesAndFolders | Select-Object Name, FullName | Sort-Object { "$_".Length } -descending | Select-Object -first 1
@@ -313,23 +344,7 @@ function PowerColorLS{
         $longestItemLength += 1
     }
 
-    if($options.longFormat){
-        $acls = $filesAndFolders | get-acl -ErrorAction SilentlyContinue
-        $longestOwnerAcl = ($acls | Select-Object Owner | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Owner
-        $longestOwnerAclLength = $longestOwnerAcl.Length
-
-        $longestGroupAcl = ($acls | Select-object Group | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Group
-        $longestGroupAclLength = $longestGroupAcl.Length
-
-        $longestDate = ($filesAndFolders | Select-Object @{n="LastWriteTime";e={$_.Lastwritetime.ToString("f")}} | Sort-Object { "$_".Length } -descending | Select-Object -first 1).LastWriteTime
-        $longestDateLength = $longestDate.Length
-
-        # Calculate max lengths of different long outputs so we can determine how much will fit in the console
-        $fullItemMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + $longestGroupAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-        $noGroupMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-        $noGroupOrOwnerMaxLength = 11 + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-        $noGroupOrOwnerOrModeMaxLength = 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-    }
+    $longFormatData = Get-LongFormatData -options $options -filesAndFolders $filesAndFolders
 
 	$itemSpacerWidth = 4
     $lineCharsCounter = 0
@@ -363,11 +378,11 @@ function PowerColorLS{
                 $extra = "\"
             }
 
-            $color = Get-ItemColor $isFolder $name $fileExt
-            $icon = Get-ItemIcon $isFolder $name $fileExt
+            $color = Get-ItemColor -isFolder $isFolder -name $name -fileExt $fileExt
+            $icon = Get-ItemIcon -isFolder $isFolder -name $name -fileExt $fileExt
 
             $nameOutput = "${name}${extra}"
-            
+
             if($options.longFormat){
                 $acl = Get-Acl $e.FullName
                 $lw = ($e.LastWriteTime).ToString("f")
@@ -375,33 +390,34 @@ function PowerColorLS{
                 $group = $acl.Group
                 if($isFolder){
                     if($options.showDirectorySize){
-                        $size = Get-FriendlySize((Get-Childitem $e.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | Select-Object sum).sum)
+                        $directorySizeInBytes = ((Get-Childitem $e.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | Select-Object sum).sum)
+                        $size = Get-FriendlySize -bytes $directorySizeInBytes
                     }else{
                         $size = ""
                     }
                 }else{
-                    $size = Get-FriendlySize($e.Length)
+                    $size = Get-FriendlySize -bytes $e.Length
                 }
                 $sizeWithSpace = $size.PadRight(8)
 
                 $mode = Get-ModeForLongListing $e.Mode
 
-                $ownerWithSpace = "${owner}" + (" "*($longestOwnerAclLength - $owner.length))
-                $groupWithSpace = "${group}" + (" "*($longestGroupAclLength - $group.length))
-                $lwWithSpace = "${lw}" + (" "*($longestDateLength - $lw.Length))
+                $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
+                $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
+                $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
 
                 $ownerColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
                 $groupColor = (ConvertFrom-RGBColor -RGB ("D3D865"))
                 $lwColor = (ConvertFrom-RGBColor -RGB ("45B2A1"))
                 $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
 
-                if($availableCharWith -gt $fullItemMaxLength){
+                if($availableCharWith -gt $longFormatData.fullItemMaxLength){
                     $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
-                }elseif($availableCharWith -gt $noGroupMaxLength){
+                }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
                     $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
-                }elseif($availableCharWith -gt $noGroupOrOwnerMaxLength){
+                }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
                     $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
-                }elseif($availableCharWith -gt $noGroupOrOwnerOrModeMaxLength){
+                }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
                     $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
                 }else{
                     $printout = "${sizeColor}${sizeWithSpace}  ${color}${icon} ${nameOutput}"
@@ -412,16 +428,16 @@ function PowerColorLS{
             }
 
             if ((-not $options.oneEntryPerLine) -and(-not $options.longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
-                write-host ""
+                Write-Host ""
                 $lineCharsCounter = $printout.length
             }
 
             if($options.longFormat){
-                write-host "${printout}"
+                Write-Host "${printout}"
             }elseif($options.oneEntryPerLine){
-                write-host "${color}${printout}"
+                Write-Host "${color}${printout}"
             }else{
-                write-host "${color}${printout}" -nonewline
+                Write-Host "${color}${printout}" -nonewline
             }
         }
 	}
