@@ -29,13 +29,13 @@ PowerColorLS -a -l
 ![Screenshot 2](./media/screens/powercolorls_a_l.png)
 
 List all files and directories including hidden ones and ones starting with '.' in long listing (wide) format and also include directory size
-```powershell
+```
 PowerColorLS -a -l --show-directory-size
 ```
 ![Screenshot 3](./media/screens/powercolorls_a_l_show_directory_size.png)
 
 List files only, followed by list directories only
-```powershell
+```
 PowerColorLS -f
 PowerColorLS -d
 ```
@@ -58,21 +58,21 @@ Entries will be sorted alphabetically if no sorting option is specified.
         -1                      list one file per line
         -d, --dirs              show only directories
         -f, --files             show only files
-        -ds, --ds, -sds, --sds, --show-directory-size
+        -ds, -sds, --sds, --show-directory-size
                                 show directory size (can take a long time)
 
 sorting options:
 
-        -sd, --sd, --sort-dirs, --group-directories-first
+        -sd, --sort-dirs, --group-directories-first
                                 sort directories first
-        -sf, --sf, --sort-files, --group-files-first
+        -sf, --sort-files, --group-files-first
                                 sort files first
         -t, -st, --st
                                 sort by modification time, newest first
 
 general options:
 
-        -h, --h, --help         prints this help
+        -h, --help         prints this help
 ```
 
 ## Alias to ls

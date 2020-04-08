@@ -16,21 +16,103 @@ function Show-Help{
     Write-Host "`t-1`t`t`tlist one file per line"
     Write-Host "`t-d, --dirs`t`tshow only directories"
     Write-Host "`t-f, --files`t`tshow only files"
-    Write-Host "`t-ds, --ds, -sds, --sds, --show-directory-size"
+    Write-Host "`t-ds, -sds, --sds, --show-directory-size"
     Write-Host "`t`t`t`tshow directory size (can take a long time)"
     Write-Host ""
     Write-Host "sorting options:"
     Write-Host ""
-    Write-Host "`t-sd, --sd, --sort-dirs, --group-directories-first"
+    Write-Host "`t-sd, --sort-dirs, --group-directories-first"
     Write-Host "`t`t`t`tsort directories first"
-    Write-Host "`t-sf, --sf, --sort-files, --group-files-first"
+    Write-Host "`t-sf, --sort-files, --group-files-first"
     Write-Host "`t`t`t`tsort files first"
     Write-Host "`t-t, -st, --st"
     Write-Host "`t`t`t`tsort by modification time, newest first"
     Write-Host ""
     Write-Host "general options:"
     Write-Host ""
-    Write-Host "`t-h, --h, --help`t`tprints this help"
+    Write-Host "`t-h, --help`t`tprints this help"
+}
+
+function Get-Options([array] $arguments){
+    $options = @{
+        oneEntryPerLine = $false
+        showHiddenFiles = $false
+        dirOnly = $false
+        fileOnly = $false
+        longFormat = $false
+        dirsFirst = $false
+        filesFirst = $false
+        sortByModificationTime = $false
+        showDirectorySize = $false
+    }
+
+    $get_optionsResult = @{
+        continue = $true
+        errorMessage = $null
+        query = "."
+    }
+
+    if($arguments){
+        foreach($arg in $arguments){
+            if($null -ne $arg){
+                $a = "$arg"
+                $isPath = Test-Path -path $a
+                if($isPath){
+                    $get_optionsResult.query = $arg
+                }else{
+                    switch ($a) {
+                        {(($a -eq "-h") -or ($a -eq "--h") -or ($a -eq "--help"))} {
+                            Show-Help
+                            $get_optionsResult.continue = $false
+                            return $get_optionsResult
+                       }
+                        "-1" {
+                             $options.oneEntryPerLine = $true
+                        }
+                        {(($a -eq "-a") -or ($a -eq "--all") -or ($a -eq "--almost-all"))} {
+                            $options.showHiddenFiles = $true
+                        }
+                        {(($a -eq "-d") -or ($a -eq "--dirs") -or ($a -eq "--directory"))} {
+                            $options.dirOnly = $true
+                        }
+                        {(($a -eq "-f") -or ($a -eq "--files"))} {
+                            $options.fileOnly = $true
+                        }
+                        {(($a -eq "-l") -or ($a -eq "--long"))} {
+                            $options.longFormat = $true
+                        }
+                        {(($a -eq "-sd") -or ($a -eq "--sd") -or ($a -eq "--sort-dirs") -or ($a -eq "--group-directories-first"))} {
+                            $options.dirsFirst = $true
+                        }
+                        {(($a -eq "-sf") -or ($a -eq "--sf") -or ($a -eq "--sort-files") -or ($a -eq "--group-files-first"))} {
+                            $options.filesFirst = $true
+                        }
+                        {(($a -eq "-t") -or ($a -eq "--st") -or ($a -eq "-st"))} {
+                            $options.sortByModificationTime = $true
+                        }
+                        {(($a -eq "-ds") -or ($a -eq "--ds") -or ($a -eq "-sds") -or ($a -eq "--sds") -or ($a -eq "--show-directory-size"))} {
+                            $options.showDirectorySize = $true
+                        }
+                        default{
+                            if($a -like('-*')){
+                                $get_optionsResult.errorMessage = "invalid option $a"
+                                $get_optionsResult.continue = $false
+                                return $get_optionsResult
+
+                            }else{
+                                $get_optionsResult.errorMessage = "$a is not a valid path"
+                                $get_optionsResult.continue = $false
+                                return $get_optionsResult
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    $get_optionsResult.options = $options
+    return $get_optionsResult
 }
 
 function Get-FriendlySize {
@@ -42,6 +124,92 @@ function Get-FriendlySize {
     "{0:N$($N)} {1}" -f $Bytes, $sizes[$i]
 }
 
+function Get-FilesAndFolders($options, $query){
+    if($options.showHiddenFiles){
+        return (Get-ChildItem $query -force)
+    }else{
+        return (Get-ChildItem $query)
+    }
+}
+
+function Get-SortedFilesAndFolders($filesAndFolders, $options){
+    if($options.sortByModificationTime){
+        return $filesAndFolders  | Sort-Object Lastwritetime -descending
+    }elseif($options.filesFirst){
+        return $filesAndFolders | Sort-Object Attributes -descending
+    }elseif($options.dirsFirst){
+        return $filesAndFolders
+    }else{
+        return $filesAndFolders  | Sort-Object Name
+    }
+}
+
+function Get-ItemColor($isFolder, $name, $fileExt){
+    if($isFolder){
+        $colorHex = $colorTheme.Types.Directories.WellKnown[$name]
+        if($null -eq $colorHex){
+            $colorHex = "EEEE8B"
+        }
+    }else{
+        $colorHex = $colorTheme.Types.Files.WellKnown[$name]
+        if($null -eq $colorHex){
+            $colorHex = $colorTheme.Types.Files[$fileExt]
+        }
+        if($null -eq $colorHex){
+            $colorHex = "EEEEEE"
+        }
+    }
+    return ConvertFrom-RGBColor -RGB ($colorHex)
+}
+
+function Get-ItemIcon($isFolder, $name, $fileExt){
+    if($isFolder){
+        $iconName = $iconTheme.Types.Directories.WellKnown[$name]
+        if($null -eq $iconName){
+            $iconName = $iconTheme.Types.Directories[""]
+        }
+    }else{
+        $iconName = $iconTheme.Types.Files.WellKnown[$name]
+        if($null -eq $iconName){
+            $iconName = $iconTheme.Types.Files[$fileExt]
+        }
+        if($null -eq $iconName){
+            $iconName = $iconTheme.Types.Files[""]
+        }
+    }
+    return $glyphs[$iconName]
+}
+
+function Get-ModeForLongListing($modeInput){
+    $mode = ""
+    foreach ($m in $modeInput.ToCharArray()) {
+        switch($m){
+            "-" {
+                $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) + "- "
+            }
+            "d" {
+                $mode += (ConvertFrom-RGBColor -RGB ("EEEE8B")) + $glyphs["nf-fa-folder_o"] + " "
+            }
+            "a" {
+                $mode += (ConvertFrom-RGBColor -RGB ("EE82EE")) + $glyphs["nf-fa-archive"] + " "
+            }
+            "r" {
+                $mode += (ConvertFrom-RGBColor -RGB ("6382FF")) + $glyphs["nf-fa-lock"] + " "
+            }
+            "h" {
+                $mode += (ConvertFrom-RGBColor -RGB ("BABABA")) + $glyphs["nf-mdi-file_hidden"] + " "
+            }
+            "s" {
+                $mode += (ConvertFrom-RGBColor -RGB ("EDA1A1")) + $glyphs["nf-fa-gear"] + " "
+            }
+            default{
+                $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) +  $m + " "
+            }
+        }
+    }
+    return $mode
+}
+
 function PowerColorLS{
 <#
  .Synopsis
@@ -51,32 +219,32 @@ function PowerColorLS{
   List information about files and directories (the current directory by default).
   Entries will be sorted alphabetically if no sorting option is specified.
   The directories and files will be displayed with an icon and color scheme.
-  The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/) 
+  The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/)
   being installed and configured first.
 
     Usage: PowerColorLs [OPTION]... [FILE]..."
 
-        options:   
+        options:
         -a, --all           do not ignore hidden files and files starting with .
         -l, --long          use a long listing format
         -1                  list one file per line
         -d, --dirs          show only directories
         -f, --files         show only files
-        -ds, --ds, -sds, --sds, --show-directory-size
+        -ds, -sds, --sds, --show-directory-size
                             show directory size (can take a long time)
-    
+
         sorting options:
-    
-        -sd, --sd, --sort-dirs, --group-directories-first
+
+        -sd, --sort-dirs, --group-directories-first
                             sort directories first
-        -sf, --sf, --sort-files, --group-files-first
+        -sf, --sort-files, --group-files-first
                             sort files first
         -t, -st, --st
                             sort by modification time, newest first
-    
+
         general options:
-    
-        -h, --h, --help     prints help information
+
+        -h, --help     prints help information
 
  .Example
    # Show help
@@ -104,117 +272,48 @@ function PowerColorLS{
 
  .Example
    # Show a lising of all files and directories in the current location in a long format
-   Get-ColorizedDirectoryListing --long   
+   Get-ColorizedDirectoryListing --long
 
  .Example
    # Show a lising of all files and directories in the current location in a long format including directory size
    Get-ColorizedDirectoryListing --long --show-directory-size
 
-#>    
-    $query = "."
+#>
 
-    # options
-    $option_oneEntryPerLine = $false
-    $option_showHiddenFiles = $false
-    $option_dirOnly = $false
-    $option_fileOnly = $false
-    $option_longFormat = $false
-    $option_dirsFirst = $false
-    $option_filesFirst = $false
-    $option_sortByModificationTime = $false
-    $option_showDirectorySize = $false
+    $get_optionsResult = Get-Options $args
+
+    if($get_optionsResult.continue -eq $false){
+        if($null -ne $get_optionsResult.errorMessage){
+            $errMsg = (ConvertFrom-RGBColor -RGB ("FF0000")) + $glyphs["nf-fa-warning"] + " " + $get_optionsResult.errorMessage
+            Write-Host $errMsg
+        }
+        return
+    }
+
+    $query = $get_optionsResult.query
 
     # load options
-    if($args){
-        foreach($arg in $args){
-            if($arg -eq $null){
-
-            }else{
-                $a = "$arg"
-                $isPath = Test-Path -path $a
-                if($isPath){
-                    $query = $arg
-                }else{
-                    switch ($a) {
-                        {(($a -eq "-h") -or ($a -eq "--h") -or ($a -eq "--help"))} { 
-                            Show-Help
-                            return
-                       }
-                        "-1" {
-                             $option_oneEntryPerLine = $true
-                        }
-                        {(($a -eq "-a") -or ($a -eq "--all") -or ($a -eq "--almost-all"))} { 
-                            $option_showHiddenFiles = $true
-                        } 
-                        {(($a -eq "-d") -or ($a -eq "--dirs") -or ($a -eq "--directory"))} { 
-                            $option_dirOnly = $true
-                        }
-                        {(($a -eq "-f") -or ($a -eq "--files"))} { 
-                            $option_fileOnly = $true
-                        }
-                        {(($a -eq "-l") -or ($a -eq "--long"))} { 
-                            $option_longFormat = $true
-                        }
-                        {(($a -eq "-sd") -or ($a -eq "--sd") -or ($a -eq "--sort-dirs") -or ($a -eq "--group-directories-first"))} { 
-                            $option_dirsFirst = $true
-                        }
-                        {(($a -eq "-sf") -or ($a -eq "--sf") -or ($a -eq "--sort-files") -or ($a -eq "--group-files-first"))} { 
-                            $option_filesFirst = $true
-                        }
-                        {(($a -eq "-t") -or ($a -eq "--st") -or ($a -eq "-st"))} { 
-                            $option_sortByModificationTime = $true
-                        }
-                        {(($a -eq "-ds") -or ($a -eq "--ds") -or ($a -eq "-sds") -or ($a -eq "--sds") -or ($a -eq "--show-directory-size"))} { 
-                            $option_showDirectorySize = $true
-                        }
-                        default{
-                            if($a -like('-*')){
-                                Write-Host "invalid option $a"
-                            }else{
-                                Write-Host "$a is not a valid path"
-                            }
-                            return
-                        }
-                    } 
-                    
-                }
-            }
-        }
-    }
-
-    # use options
+    $options = $get_optionsResult.options
 
     # get the items
-    if($option_showHiddenFiles){
-        $filesAndFolders = Get-ChildItem $query -force
-    }else{
-        $filesAndFolders = Get-ChildItem $query
-    }
+    $filesAndFolders = Get-FilesAndFolders $options $query
 
-    if($filesAndFolders.Length -eq 0){
-        # nothing found
+    if($filesAndFolders.Length -eq 0){ # nothing found
         return
     }
 
     # sorting
-    if($option_sortByModificationTime){
-        $filesAndFolders = $filesAndFolders  | Sort Lastwritetime -descending 
-    }elseif($option_dirsFirst){
-    }elseif($option_filesFirst){
-        $filesAndFolders = $filesAndFolders | Sort Attributes -descending 
-    }else{
-        $filesAndFolders = $filesAndFolders  | Sort Name 
-    }
-    
+    $filesAndFolders = Get-SortedFilesAndFolders $filesAndFolders $options
+
     # determine the longest items so we can adapt the list to the console window width
     $longestItem = $filesAndFolders | Select-Object Name, FullName | Sort-Object { "$_".Length } -descending | Select-Object -first 1
     $longestItemLength = ($longestItem).name.Length
     $longestItemIsFolder = Test-Path -path ($longestItem.FullName) -pathtype container
-    if(($longestItemIsFolder) -and (-not $option_fileOnly)){
+    if(($longestItemIsFolder) -and (-not $options.fileOnly)){
         $longestItemLength += 1
     }
 
-    if($option_longFormat){
+    if($options.longFormat){
         $acls = $filesAndFolders | get-acl -ErrorAction SilentlyContinue
         $longestOwnerAcl = ($acls | Select-Object Owner | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Owner
         $longestOwnerAclLength = $longestOwnerAcl.Length
@@ -225,6 +324,7 @@ function PowerColorLS{
         $longestDate = ($filesAndFolders | Select-Object @{n="LastWriteTime";e={$_.Lastwritetime.ToString("f")}} | Sort-Object { "$_".Length } -descending | Select-Object -first 1).LastWriteTime
         $longestDateLength = $longestDate.Length
 
+        # Calculate max lengths of different long outputs so we can determine how much will fit in the console
         $fullItemMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + $longestGroupAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
         $noGroupMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
         $noGroupOrOwnerMaxLength = 11 + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
@@ -246,63 +346,36 @@ function PowerColorLS{
 
         $ignoreFile = $false
 
-        if((-not $option_showHiddenFiles) -and ($name.StartsWith("."))) {
-            $ignoreFile = $true
-        } 
-
-        if(($option_dirOnly) -and (-not $isFolder)) {
+        if((-not $options.showHiddenFiles) -and ($name.StartsWith("."))) {
             $ignoreFile = $true
         }
 
-        if(($option_fileOnly) -and ($isFolder)) {
+        if(($options.dirOnly) -and (-not $isFolder)) {
+            $ignoreFile = $true
+        }
+
+        if(($options.fileOnly) -and ($isFolder)) {
             $ignoreFile = $true
         }
 
         if(-not $ignoreFile){
-
             if($isFolder){
                 $extra = "\"
-                $colorHex = $colorTheme.Types.Directories.WellKnown[$name]
-                if($colorHex -eq $null){
-                    $colorHex = "EEEE8B"
-                }
-
-                $iconName = $iconTheme.Types.Directories.WellKnown[$name]
-                if($iconName -eq $null){
-                    $iconName = $iconTheme.Types.Directories[""]
-                }
-            }else{
-                $colorHex = $colorTheme.Types.Files.WellKnown[$name]
-                if($colorHex -eq $null){
-                    $colorHex = $colorTheme.Types.Files[$fileExt]
-                }
-                if($colorHex -eq $null){
-                    $colorHex = "EEEEEE"
-                }
-
-                $iconName = $iconTheme.Types.Files.WellKnown[$name]
-                if($iconName -eq $null){
-                    $iconName = $iconTheme.Types.Files[$fileExt]
-                }
-                if($iconName -eq $null){
-                    $iconName = $iconTheme.Types.Files[""]
-                }
             }
 
-            $color = ConvertFrom-RGBColor -RGB ($colorHex)
+            $color = Get-ItemColor $isFolder $name $fileExt
+            $icon = Get-ItemIcon $isFolder $name $fileExt
 
             $nameOutput = "${name}${extra}"
-
-            $icon = $glyphs[$iconName]
-            if($option_longFormat){
+            
+            if($options.longFormat){
                 $acl = Get-Acl $e.FullName
                 $lw = ($e.LastWriteTime).ToString("f")
                 $owner = $acl.Owner
                 $group = $acl.Group
                 if($isFolder){
-                    
-                    if($option_showDirectorySize){
-                        $size = Get-FriendlySize((Get-Childitem $e.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | select sum).sum)
+                    if($options.showDirectorySize){
+                        $size = Get-FriendlySize((Get-Childitem $e.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | Select-Object sum).sum)
                     }else{
                         $size = ""
                     }
@@ -311,32 +384,7 @@ function PowerColorLS{
                 }
                 $sizeWithSpace = $size.PadRight(8)
 
-                $mode = ""
-                foreach ($m in $e.Mode.ToCharArray()) {
-                    switch($m){
-                        "-" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) + "- "
-                        }
-                        "d" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("EEEE8B")) + $glyphs["nf-fa-folder_o"] + " "
-                        }
-                        "a" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("EE82EE")) + $glyphs["nf-fa-archive"] + " "
-                        }
-                        "r" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("6382FF")) + $glyphs["nf-fa-lock"] + " "
-                        }
-                        "h" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("BABABA")) + $glyphs["nf-mdi-file_hidden"] + " "
-                        }
-                        "s" {
-                            $mode += (ConvertFrom-RGBColor -RGB ("EDA1A1")) + $glyphs["nf-fa-gear"] + " "
-                        }
-                        default{
-                            $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) +  $m + " "
-                        }
-                    }
-                }
+                $mode = Get-ModeForLongListing $e.Mode
 
                 $ownerWithSpace = "${owner}" + (" "*($longestOwnerAclLength - $owner.length))
                 $groupWithSpace = "${group}" + (" "*($longestGroupAclLength - $group.length))
@@ -363,14 +411,14 @@ function PowerColorLS{
                 $lineCharsCounter += $printout.length
             }
 
-            if ((-not $option_oneEntryPerLine) -and(-not $option_longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
+            if ((-not $options.oneEntryPerLine) -and(-not $options.longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
                 write-host ""
                 $lineCharsCounter = $printout.length
             }
 
-            if($option_longFormat){
+            if($options.longFormat){
                 write-host "${printout}"
-            }elseif($option_oneEntryPerLine){
+            }elseif($options.oneEntryPerLine){
                 write-host "${color}${printout}"
             }else{
                 write-host "${color}${printout}" -nonewline
