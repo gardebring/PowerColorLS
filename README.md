@@ -21,19 +21,23 @@ Import-Module PowerColorLS
 PowerColorLS
 ```
 
+
 List all files and directories including hidden ones and ones starting with '.' in long listing (wide) format
 ```powershell
-PowerColorLS -l
+PowerColorLS -a -l
 ```
 ![Screenshot 2](./media/screens/powercolorls_a_l.png)
+
 List all files and directories including hidden ones and ones starting with '.' in long listing (wide) format and also include directory size
 ```powershell
-PowerColorLS -l
+PowerColorLS -a -l --show-directory-size
 ```
 ![Screenshot 3](./media/screens/powercolorls_a_l_show_directory_size.png)
+
 List files only, followed by list directories only
 ```powershell
-PowerColorLS -l
+PowerColorLS -f
+PowerColorLS -d
 ```
 ![Screenshot 4](./media/screens/powercolorls_f_d.png)
 
