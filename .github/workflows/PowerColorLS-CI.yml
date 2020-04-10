@@ -25,10 +25,12 @@ jobs:
     # Install Pester testing framework
     - name: Install Pester
       run: Install-Module -Name Pester -Force
+      shell: powershell
 
     # Install prerequisite Terminal-Icons module
     - name: Install Terminal-Icons
       run: Install-Module -Name Terminal-Icons -Repository PSGallery -Force
+      shell: powershell
 
     # Runs a single command using the runners shell
     - name: Run Pester Tests
