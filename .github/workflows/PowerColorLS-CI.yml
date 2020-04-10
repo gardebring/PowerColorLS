@@ -22,12 +22,16 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
+    # Install Pester testing framework
     - name: Install Pester
       run: Install-Module -Name Pester -Force
-      
+
+    # Install prerequisite Terminal-Icons module
+    - name: Install Terminal-Icons
+      run: Install-Module -Name Terminal-Icons -Repository PSGallery -Force
+
     # Runs a single command using the runners shell
-    - name: Run tests
+    - name: Run Pester Tests
       run: .\RunTests.ps1
       shell: powershell
 
