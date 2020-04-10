@@ -26,6 +26,12 @@ jobs:
     - name: Install Pester
       run: Install-Module -Name Pester -Force
       shell: powershell
+      
+    # Install Script Analyzer
+    - name: Install Script Analyzer
+      run: Install-Module -Name PSScriptAnalyzer -Force
+      shell: powershell
+      
 
     # Install prerequisite Terminal-Icons module
     - name: Install Terminal-Icons
