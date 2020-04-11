@@ -7,6 +7,9 @@ Describe "Importing" {
             $out = (powershell -noprofile "Import-Module $ROOT\..\src\PowerColorLS.psm1")
             $out | % { $warn = $warn -or ($_ -Match "WARNING") }
             $warn | Should be $false
+            if($true -eq $warn){
+                Write-Host -Message $out
+            }
         }
     }
 
