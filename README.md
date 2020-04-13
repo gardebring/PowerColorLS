@@ -55,6 +55,7 @@ Entries will be sorted alphabetically if no sorting option is specified.
 
         -a, --all               do not ignore hidden files and files starting with .
         -l, --long              use a long listing format
+        -r, --report            shows a brief report
         -1                      list one file per line
         -d, --dirs              show only directories
         -f, --files             show only files

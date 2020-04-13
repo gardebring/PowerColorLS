@@ -13,6 +13,7 @@ function Show-Help{
     Write-Host ""
     Write-Host "`t-a, --all`t`tdo not ignore hidden files and files starting with ."
     Write-Host "`t-l, --long`t`tuse a long listing format"
+    Write-Host "`t-r, --report`t`tshows a brief report"
     Write-Host "`t-1`t`t`tlist one file per line"
     Write-Host "`t-d, --dirs`t`tshow only directories"
     Write-Host "`t-f, --files`t`tshow only files"
@@ -54,6 +55,7 @@ function Get-OptionsResult{
         filesFirst = $false
         sortByModificationTime = $false
         showDirectorySize = $false
+        showReport = $false
     }
 
     $get_optionsResult = @{
@@ -102,6 +104,9 @@ function Get-OptionsResult{
                         }
                         {(($a -eq "-ds") -or ($a -eq "--ds") -or ($a -eq "-sds") -or ($a -eq "--sds") -or ($a -eq "--show-directory-size"))} {
                             $options.showDirectorySize = $true
+                        }
+                        {(($a -eq "-r") -or ($a -eq "--r") -or ($a -eq "--report"))} {
+                            $options.showReport = $true
                         }
                         default{
                             if($a -like('-*')){
@@ -388,6 +393,7 @@ function PowerColorLS{
         options:
         -a, --all           do not ignore hidden files and files starting with .
         -l, --long          use a long listing format
+        -r, --report        shows a brief report
         -1                  list one file per line
         -d, --dirs          show only directories
         -f, --files         show only files
@@ -497,9 +503,19 @@ function PowerColorLS{
     $lwColor = (ConvertFrom-RGBColor -RGB ("45B2A1"))
     $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
 
+    $fileCount = 0
+    $folderCount = 0
+
     # start iterating over our items
 	foreach ($e in $filesAndFolders) {
 		$isFolder = Test-Path -path ($e.FullName) -pathtype container
+
+        if($isFolder){
+            $folderCount++
+        }else{
+            $fileCount++
+        }
+
 		$fileExt = [System.IO.Path]::GetExtension($e.name)
 		$name = $e.name
         $extra = ""
@@ -609,6 +625,22 @@ function PowerColorLS{
             }
         }
 	}
+
+    if($options.showReport){
+        $dirColor = (ConvertFrom-RGBColor -RGB ("00AAFF"))
+        $whiteColor = (ConvertFrom-RGBColor -RGB ("FFFFFF"))
+        Write-Host ""
+        if(-not $options.longFormat){
+            Write-Host ""
+        }
+        $itemsLength = $filesAndFolders.Length
+        $q = $get_optionsResult.query
+        Write-Host "Found ${itemsLength} files and folders matching ${dirColor}$q"
+        Write-Host ""
+        Write-Host "`tFolders:`t$folderCount"
+        Write-Host "`tFiles:`t`t$fileCount"
+        Write-Host ""
+    }
 }
 
 Export-ModuleMember -Function PowerColorLs
