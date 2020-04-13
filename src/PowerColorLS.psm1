@@ -128,10 +128,23 @@ function Get-FriendlySize {
 function Get-FilesAndFoldersListing{
     Param($options, $query)
     if($options.showHiddenFiles){
-        return (Get-ChildItem $query -force)
+        return Get-ChildItem $query -force
     }else{
-        return (Get-ChildItem $query)
+        return Get-ChildItem $query
     }
+}
+
+function Get-DirectoryName{
+    Param($filesAndFolders)
+    
+    $f = $filesAndFolders[0]
+
+    # get the directory for the items listed
+    $directoryName = $f.Parent.FullName
+    if($directoryName.Length -eq 0){
+        $directoryName = $f.DirectoryName
+    }
+    return $directoryName
 }
 
 function Get-SortedFilesAndFoldersListing{
@@ -186,7 +199,7 @@ function Get-ItemIcon{
 }
 
 function Get-LongFormatData{
-    Param($options, $filesAndFolders)
+    Param($options, $filesAndFolders, $IsGitDirectory)
     if($options.longFormat){
         $acls = $filesAndFolders | get-acl -ErrorAction SilentlyContinue
 
@@ -196,15 +209,20 @@ function Get-LongFormatData{
 
         $longestDate = ($filesAndFolders | Select-Object @{n="LastWriteTime";e={$_.Lastwritetime.ToString("f")}} | Sort-Object { "$_".Length } -descending | Select-Object -first 1).LastWriteTime
 
+        $gitIncrease = 0
+        if($IsGitDirectory){
+            $gitIncrease = 2
+        }
+
         return @{
             longestOwnerAclLength = $longestOwnerAcl.Length
             longestGroupAclLength = $longestGroupAcl.Length
             longestDateLength = $longestDate.Length
             # Calculate max lengths of different long outputs so we can determine how much will fit in the console
-            fullItemMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + $longestGroupAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-            noGroupMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-            noGroupOrOwnerMaxLength = 11 + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
-            noGroupOrOwnerOrModeMaxLength = 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5
+            fullItemMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + $longestGroupAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5 + $gitIncrease
+            noGroupMaxLength = 11 + 2 + $longestOwnerAclLength + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5 + $gitIncrease
+            noGroupOrOwnerMaxLength = 11 + 2 + 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5 + $gitIncrease
+            noGroupOrOwnerOrModeMaxLength = 8 + 2 +  $longestDateLength + 2 + $longestItemLength + 5 + $gitIncrease
         }
     }
     return $null
@@ -239,6 +257,26 @@ function Get-ModeForLongListing{
         }
     }
     return $mode
+}
+
+function Get-IsGitDirectory {
+    Param($directory)
+    if ((Test-Path "${directory}\.git") -eq $TRUE) {
+        return $TRUE
+    }
+    
+    # Test within parent dirs
+    $checkIn = (Get-Item ${directory}).parent
+    while ($checkIn -ne $NULL) {
+        $pathToTest = $checkIn.fullname + '/.git'
+        if ((Test-Path $pathToTest) -eq $TRUE) {
+            return $TRUE
+        } else {
+            $checkIn = $checkIn.parent
+        }
+    }
+    
+    return $FALSE
 }
 
 function PowerColorLS{
@@ -333,6 +371,33 @@ function PowerColorLS{
         return
     }
 
+    # get the directory for the items listed
+    $directoryName = Get-DirectoryName -filesAndFolders $filesAndFolders
+
+    # get the current directory
+    $currentPath = (Get-Location).Path
+
+    # check if git directory
+    $IsGitDirectory = Get-IsGitDirectory -directory $directoryName
+
+    if($IsGitDirectory){
+        Set-Location -Path $directoryName
+        $gitStatus = git status --porcelain=v1
+        $gitRoot = git rev-parse --show-toplevel
+        Set-Location -Path $currentPath
+
+        $gitStatusItems = @()
+
+        foreach($gitStatusItem in $gitStatus){
+            $gs = $gitStatusItem.Trim().Split(" ")
+            $l = -join($gitRoot, "/", $gs[1])
+            $gitStatusItems += @{
+                status = $gs[0]
+                path = $l
+            }
+        }        
+    }
+
     # sorting
     $filesAndFolders = Get-SortedFilesAndFoldersListing -filesAndFolders $filesAndFolders -options $options
 
@@ -344,7 +409,7 @@ function PowerColorLS{
         $longestItemLength += 1
     }
 
-    $longFormatData = Get-LongFormatData -options $options -filesAndFolders $filesAndFolders
+    $longFormatData = Get-LongFormatData -options $options -filesAndFolders $filesAndFolders -IsGitDirectory $IsGitDirectory
 
 	$itemSpacerWidth = 4
     $lineCharsCounter = 0
@@ -380,6 +445,37 @@ function PowerColorLS{
 
             $color = Get-ItemColor -isFolder $isFolder -name $name -fileExt $fileExt
             $icon = Get-ItemIcon -isFolder $isFolder -name $name -fileExt $fileExt
+            $colorAndIcon = "${color}${icon}"
+            $gitColorAndIcon = ""
+
+            if($IsGitDirectory){
+                $gitGlyph = $glyphs["nf-fa-check"]
+                $gitColor = (ConvertFrom-RGBColor -RGB ("00FF00"))
+                foreach($gitStatusItem in $gitStatusItems){
+                    $updateGitStatus = $false
+                    $currentItemForGitCompare = $e.FullName -Replace "\\", "/"
+                    if($currentItemForGitCompare -eq $gitStatusItem.path){
+                        $updateGitStatus = $true
+                    }elseif($isFolder -and ($gitStatusItem.path.StartsWith($currentItemForGitCompare))){
+                        $updateGitStatus = $true
+                    }
+
+                    if($updateGitStatus){
+                        switch($gitStatusItem.status){
+                            "??" {
+                                $gitGlyph = $glyphs["nf-fa-question"]
+                                $gitColor = (ConvertFrom-RGBColor -RGB ("FF0000"))
+                            }
+                            default{
+                                $gitGlyph = $gitStatusItem.status
+                                $gitColor = (ConvertFrom-RGBColor -RGB ("FFFF00"))
+                            }
+                        }                        
+                    }
+                }
+                $gitColorAndIcon = "${gitColor}${gitGlyph} "
+                $colorAndIcon = "${gitColorAndIcon}${colorAndIcon}"
+            }
 
             $nameOutput = "${name}${extra}"
 
@@ -412,32 +508,38 @@ function PowerColorLS{
                 $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
 
                 if($availableCharWith -gt $longFormatData.fullItemMaxLength){
-                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
+                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
                 }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
-                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
+                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
                 }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
-                    $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
+                    $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
                 }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
-                    $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${color}${icon} ${nameOutput}"
+                    $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
                 }else{
-                    $printout = "${sizeColor}${sizeWithSpace}  ${color}${icon} ${nameOutput}"
+                    $printout = "${sizeColor}${sizeWithSpace}  ${colorAndIcon} ${nameOutput}"
                 }
             }else{
                 $printout = "${icon} ${nameOutput}" + (" "*($longestItemLength - $nameOutput.length + $itemSpacerWidth))
                 $lineCharsCounter += $printout.length
+                if($IsGitDirectory){
+                    $lineCharsCounter += 2
+                }
             }
 
             if ((-not $options.oneEntryPerLine) -and(-not $options.longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
                 Write-Host ""
                 $lineCharsCounter = $printout.length
+                if($IsGitDirectory){
+                    $lineCharsCounter += 2
+                }
             }
 
             if($options.longFormat){
                 Write-Host "${printout}"
             }elseif($options.oneEntryPerLine){
-                Write-Host "${color}${printout}"
+                Write-Host "${gitColorAndIcon}${color}${printout}"
             }else{
-                Write-Host "${color}${printout}" -nonewline
+                Write-Host "${gitColorAndIcon}${color}${printout}" -nonewline
             }
         }
 	}
