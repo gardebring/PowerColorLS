@@ -136,7 +136,7 @@ function Get-FilesAndFoldersListing{
 
 function Get-DirectoryName{
     Param($filesAndFolders)
-    
+
     $f = $filesAndFolders[0]
 
     # get the directory for the items listed
@@ -264,10 +264,10 @@ function Get-IsGitDirectory {
     if ((Test-Path "${directory}\.git") -eq $TRUE) {
         return $TRUE
     }
-    
+
     # Test within parent dirs
     $checkIn = (Get-Item ${directory}).parent
-    while ($checkIn -ne $NULL) {
+    while ($NULL -ne $checkIn) {
         $pathToTest = $checkIn.fullname + '/.git'
         if ((Test-Path $pathToTest) -eq $TRUE) {
             return $TRUE
@@ -275,7 +275,7 @@ function Get-IsGitDirectory {
             $checkIn = $checkIn.parent
         }
     }
-    
+
     return $FALSE
 }
 
@@ -395,7 +395,7 @@ function PowerColorLS{
                 status = $gs[0]
                 path = $l
             }
-        }        
+        }
     }
 
     # sorting
@@ -416,6 +416,11 @@ function PowerColorLS{
 
     # get how many characters we have available in this console window
     $availableCharWith = (Get-Host).ui.rawui.buffersize.width
+
+    $ownerColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
+    $groupColor = (ConvertFrom-RGBColor -RGB ("D3D865"))
+    $lwColor = (ConvertFrom-RGBColor -RGB ("45B2A1"))
+    $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))    
 
     # start iterating over our items
 	foreach ($e in $filesAndFolders) {
@@ -470,7 +475,7 @@ function PowerColorLS{
                                 $gitGlyph = $gitStatusItem.status
                                 $gitColor = (ConvertFrom-RGBColor -RGB ("FFFF00"))
                             }
-                        }                        
+                        }
                     }
                 }
                 $gitColorAndIcon = "${gitColor}${gitGlyph} "
@@ -501,11 +506,6 @@ function PowerColorLS{
                 $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
                 $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
                 $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
-
-                $ownerColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
-                $groupColor = (ConvertFrom-RGBColor -RGB ("D3D865"))
-                $lwColor = (ConvertFrom-RGBColor -RGB ("45B2A1"))
-                $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
 
                 if($availableCharWith -gt $longFormatData.fullItemMaxLength){
                     $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
