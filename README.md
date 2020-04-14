@@ -44,7 +44,6 @@ PowerColorLS -d
 Listing files in a git directory displays git status as well
 ```
 PowerColorLS
-PowerColorLS -d
 ```
 ![Screenshot 5](./media/screens/git.png)
 
