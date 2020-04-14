@@ -34,7 +34,22 @@ function Show-Help{
     Write-Host "`t-h, --help`t`tprints this help"
 }
 
-function Get-CommandExists{
+function Get-Report{
+    Param($options, $filesAndFolders, $query, $folderCount, $fileCount)
+    $queryColor = (ConvertFrom-RGBColor -RGB ("00AAFF"))
+    Write-Host ""
+    if(-not $options.longFormat){
+        Write-Host ""
+    }
+    $itemsLength = $filesAndFolders.Length
+    Write-Host "Found ${itemsLength} files and folders matching ${queryColor}$query"
+    Write-Host ""
+    Write-Host "`tFolders:`t$folderCount"
+    Write-Host "`tFiles:`t`t$fileCount"
+    Write-Host ""
+}
+
+function Get-CommandExist{
     Param ($command)
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = "stop"
@@ -307,7 +322,7 @@ function Get-ShowAsGitDirectory{
     $isGitDirectory = Get-IsGitDirectory -directory $directory
 
     # check if git is installed
-    $gitIsInstalled = Get-CommandExists -command "git"
+    $gitIsInstalled = Get-CommandExist -command "git"
 
     if(-not $gitIsInstalled){
         $isGitDirectory = $false
@@ -316,7 +331,7 @@ function Get-ShowAsGitDirectory{
     return $isGitDirectory
 }
 
-function Get-GitStatusItems{
+function Get-GitStatusItemList{
     Param($directory)
 
     # get the current directory
@@ -337,7 +352,6 @@ function Get-GitStatusItems{
             path = $l
         }
     }
-
     return $gitStatusItems
 }
 
@@ -355,7 +369,7 @@ function Get-GitColorAndIcon{
         $currentItemForGitCompare = $entity.FullName -Replace "\\", "/"
         if($currentItemForGitCompare -eq $gitStatusItem.path){
             $updateGitStatus = $true
-        }elseif($isFolder -and ($gitStatusItem.path.StartsWith($currentItemForGitCompare))){
+        }elseif($isFolder -and ($gitStatusItem.path.StartsWith($currentItemForGitCompare,'CurrentCultureIgnoreCase'))){
             $updateGitStatus = $true
         }
 
@@ -476,7 +490,7 @@ function PowerColorLS{
     $isGitDirectory = Get-ShowAsGitDirectory -directory $directoryName
 
     if($isGitDirectory){
-        $gitStatusItems = Get-GitStatusItems -directory $directoryName
+        $gitStatusItems = Get-GitStatusItemList -directory $directoryName
     }
 
     # sorting
@@ -627,19 +641,7 @@ function PowerColorLS{
 	}
 
     if($options.showReport){
-        $dirColor = (ConvertFrom-RGBColor -RGB ("00AAFF"))
-        $whiteColor = (ConvertFrom-RGBColor -RGB ("FFFFFF"))
-        Write-Host ""
-        if(-not $options.longFormat){
-            Write-Host ""
-        }
-        $itemsLength = $filesAndFolders.Length
-        $q = $get_optionsResult.query
-        Write-Host "Found ${itemsLength} files and folders matching ${dirColor}$q"
-        Write-Host ""
-        Write-Host "`tFolders:`t$folderCount"
-        Write-Host "`tFiles:`t`t$fileCount"
-        Write-Host ""
+        Get-Report -options $options -filesAndFolders $filesAndFolders -query $query -folderCount $folderCount -fileCount $fileCount
     }
 }
 

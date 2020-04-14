@@ -8,7 +8,7 @@
 RootModule = 'PowerColorLS.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.4'
+ModuleVersion = '0.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -29,6 +29,7 @@ Copyright = 'Copyright (c) 2020 Anders Gardebring'
 Description = 'List information about files and directories (the current directory by default).
 Entries will be sorted alphabetically if no sorting option is specified.
 The directories and files will be displayed with an icon and color scheme.
+Project site is at https://github.com/gardebring/PowerColorLS
 The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/)
 being installed and configured first.'
 
