@@ -74,6 +74,7 @@ sorting options:
 general options:
 
         -h, --help         prints this help
+        -v, --version      show version information
 ```
 
 ## Alias to ls

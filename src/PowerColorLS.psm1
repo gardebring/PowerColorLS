@@ -6,8 +6,14 @@ $iconTheme 	= Import-PowerShellDataFile "${terminalIconsFolder}/Data/iconThemes/
 $colorTheme	= Import-PowerShellDataFile "${terminalIconsFolder}/Data/colorThemes/$theme.psd1"
 . $terminalIconsFolder/Private/ConvertFrom-RGBColor.ps1
 
+function Get-Version{
+    return $MyInvocation.MyCommand.Module.Version
+}
+
 function Show-Help{
-    Write-Host "Usage: PowerColorLs [OPTION]... [FILE]..."
+    $v = Get-Version
+    Write-Host "Help for PowerColorLS version ${v}"
+    Write-Host "Usage: PowerColorLS [OPTION]... [FILE]..."
     Write-Host "List information about files and directories (the current directory by default)."
     Write-Host "Entries will be sorted alphabetically if no sorting option is specified."
     Write-Host ""
@@ -32,6 +38,12 @@ function Show-Help{
     Write-Host "general options:"
     Write-Host ""
     Write-Host "`t-h, --help`t`tprints this help"
+    Write-Host "`t-v, --version`t`tshow version information"
+}
+
+function Show-Version{
+    $v = Get-Version
+    Write-Host "PowerColorLS version ${v}"
 }
 
 function Get-Report{
@@ -87,40 +99,46 @@ function Get-OptionsResult{
                 if($isPath){
                     $get_optionsResult.query = $arg
                 }else{
-                    switch ($a) {
-                        {(($a -eq "-h") -or ($a -eq "--h") -or ($a -eq "--help"))} {
+                    $aDashParsed = $a -replace "--", "-"
+                    switch ($aDashParsed) {
+                        {(($aDashParsed -eq "-h") -or ($aDashParsed -eq "-help"))} {
                             Show-Help
                             $get_optionsResult.continue = $false
                             return $get_optionsResult
-                       }
+                        }
+                        {(($aDashParsed -eq "-v") -or ($aDashParsed -eq "-version"))} {
+                            Show-Version
+                            $get_optionsResult.continue = $false
+                            return $get_optionsResult
+                        }
                         "-1" {
                              $options.oneEntryPerLine = $true
                         }
-                        {(($a -eq "-a") -or ($a -eq "--all") -or ($a -eq "--almost-all"))} {
+                        {(($aDashParsed -eq "-a") -or ($aDashParsed -eq "-all") -or ($aDashParsed -eq "-almost-all"))} {
                             $options.showHiddenFiles = $true
                         }
-                        {(($a -eq "-d") -or ($a -eq "--dirs") -or ($a -eq "--directory"))} {
+                        {(($aDashParsed -eq "-d") -or ($aDashParsed -eq "-dirs") -or ($aDashParsed -eq "-directory"))} {
                             $options.dirOnly = $true
                         }
-                        {(($a -eq "-f") -or ($a -eq "--files"))} {
+                        {(($aDashParsed -eq "-f") -or ($aDashParsed -eq "-files"))} {
                             $options.fileOnly = $true
                         }
-                        {(($a -eq "-l") -or ($a -eq "--long"))} {
+                        {(($aDashParsed -eq "-l") -or ($a -eq "-long"))} {
                             $options.longFormat = $true
                         }
-                        {(($a -eq "-sd") -or ($a -eq "--sd") -or ($a -eq "--sort-dirs") -or ($a -eq "--group-directories-first"))} {
+                        {(($aDashParsed -eq "-sd") -or ($aDashParsed -eq "-sort-dirs") -or ($aDashParsed -eq "-group-directories-first"))} {
                             $options.dirsFirst = $true
                         }
-                        {(($a -eq "-sf") -or ($a -eq "--sf") -or ($a -eq "--sort-files") -or ($a -eq "--group-files-first"))} {
+                        {(($aDashParsed -eq "-sf") -or ($aDashParsed -eq "-sort-files") -or ($aDashParsed -eq "-group-files-first"))} {
                             $options.filesFirst = $true
                         }
-                        {(($a -eq "-t") -or ($a -eq "--st") -or ($a -eq "-st"))} {
+                        {(($aDashParsed -eq "-t") -or ($aDashParsed -eq "-st"))} {
                             $options.sortByModificationTime = $true
                         }
-                        {(($a -eq "-ds") -or ($a -eq "--ds") -or ($a -eq "-sds") -or ($a -eq "--sds") -or ($a -eq "--show-directory-size"))} {
+                        {(($aDashParsed -eq "-ds") -or ($aDashParsed -eq "-sds") -or ($aDashParsed -eq "-sds") -or ($aDashParsed -eq "-show-directory-size"))} {
                             $options.showDirectorySize = $true
                         }
-                        {(($a -eq "-r") -or ($a -eq "--r") -or ($a -eq "--report"))} {
+                        {(($aDashParsed -eq "-r") -or ($aDashParsed -eq "-report"))} {
                             $options.showReport = $true
                         }
                         default{
@@ -208,6 +226,21 @@ function Get-ItemColor{
     return ConvertFrom-RGBColor -RGB ($colorHex)
 }
 
+function Get-PatchedPowerColorLSIcon{
+    Param($iconName)
+    switch($iconName){
+        "nf-mdi-view_list"{
+            return "nf-fa-th_list"
+        }
+        "nf-mdi-xml"{
+            return "nf-fa-code"
+        }
+        default{
+            return $iconName
+        }
+    }
+}
+
 function Get-ItemIcon{
     Param($isFolder, $name, $fileExt)
     if($isFolder){
@@ -223,6 +256,8 @@ function Get-ItemIcon{
         if($null -eq $iconName){
             $iconName = $iconTheme.Types.Files[""]
         }
+
+        $iconName = Get-PatchedPowerColorLSIcon -iconName $iconName
     }
     return $glyphs[$iconName]
 }
@@ -402,7 +437,7 @@ function PowerColorLS{
   The module has a dependency on the powershell module Terminal-Icons (https://github.com/devblackops/Terminal-Icons/)
   being installed and configured first.
 
-    Usage: PowerColorLs [OPTION]... [FILE]..."
+    Usage: PowerColorLS [OPTION]... [FILE]..."
 
         options:
         -a, --all           do not ignore hidden files and files starting with .
@@ -426,6 +461,7 @@ function PowerColorLS{
         general options:
 
         -h, --help     prints help information
+        -v, --version  show version information
 
  .Example
    # Show help
