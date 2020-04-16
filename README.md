@@ -41,6 +41,12 @@ PowerColorLS -d
 ```
 ![Screenshot 4](./media/screens/powercolorls_f_d.png)
 
+Listing files in a git directory displays git status as well
+```
+PowerColorLS
+```
+![Screenshot 5](./media/screens/git.png)
+
 ## Help
 To get help about available arguments, run:
 ```powershell
