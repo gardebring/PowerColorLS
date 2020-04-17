@@ -560,12 +560,6 @@ function PowerColorLS{
 	foreach ($e in $filesAndFolders) {
 		$isFolder = Test-Path -path ($e.FullName) -pathtype container
 
-        if($isFolder){
-            $folderCount++
-        }else{
-            $fileCount++
-        }
-
 		$fileExt = [System.IO.Path]::GetExtension($e.name)
 		$name = $e.name
         $extra = ""
@@ -585,10 +579,14 @@ function PowerColorLS{
         }
 
         if(-not $ignoreFile){
+
             if($isFolder){
                 $extra = "\"
+                $folderCount++
+            }else{
+                $fileCount++
             }
-
+    
             $color = Get-ItemColor -isFolder $isFolder -name $name -fileExt $fileExt
             $icon = Get-ItemIcon -isFolder $isFolder -name $name -fileExt $fileExt
             $colorAndIcon = "${color}${icon}"
@@ -659,7 +657,6 @@ function PowerColorLS{
             }
 
             if ((-not $options.oneEntryPerLine) -and(-not $options.longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
-                Write-Host ""
                 $lineCharsCounter = $printout.length
                 if($isGitDirectory){
                     $lineCharsCounter += 2
