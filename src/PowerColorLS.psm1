@@ -123,7 +123,7 @@ function Get-OptionsResult{
                         {(($aDashParsed -eq "-f") -or ($aDashParsed -eq "-files"))} {
                             $options.fileOnly = $true
                         }
-                        {(($aDashParsed -eq "-l") -or ($a -eq "-long"))} {
+                        {(($aDashParsed -eq "-l") -or ($aDashParsed -eq "-long"))} {
                             $options.longFormat = $true
                         }
                         {(($aDashParsed -eq "-sd") -or ($aDashParsed -eq "-sort-dirs") -or ($aDashParsed -eq "-group-directories-first"))} {
