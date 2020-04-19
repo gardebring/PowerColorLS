@@ -25,23 +25,23 @@ jobs:
     # Install Pester testing framework
     - name: Install Pester
       run: Install-Module -Name Pester -Force
-      shell: powershell
+      shell: pwsh
       
     # Install Script Analyzer
     - name: Install Script Analyzer
       run: Install-Module -Name PSScriptAnalyzer -Force
-      shell: powershell
+      shell: pwsh
       
 
     # Install prerequisite Terminal-Icons module
     - name: Install Terminal-Icons
       run: Install-Module -Name Terminal-Icons -Repository PSGallery -Force
-      shell: powershell
+      shell: pwsh
 
     # Runs a single command using the runners shell
     - name: Run Pester Tests
       run: .\RunTests.ps1
-      shell: powershell
+      shell: pwsh
 
     # Runs a set of commands using the runners shell
     #- name: Run a multi-line script
