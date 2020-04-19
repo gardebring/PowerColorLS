@@ -586,7 +586,7 @@ function PowerColorLS{
             }else{
                 $fileCount++
             }
-    
+
             $color = Get-ItemColor -isFolder $isFolder -name $name -fileExt $fileExt
             $icon = Get-ItemIcon -isFolder $isFolder -name $name -fileExt $fileExt
             $colorAndIcon = "${color}${icon}"
