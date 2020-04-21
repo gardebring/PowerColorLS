@@ -1,0 +1,94 @@
+function Get-IsGitDirectory {
+    Param($directory)
+    if ((Test-Path "${directory}/.git") -eq $TRUE) {
+        return $TRUE
+    }
+
+    # Test within parent dirs
+    $checkIn = (Get-Item ${directory}).parent
+    while ($NULL -ne $checkIn) {
+        $pathToTest = $checkIn.fullname + '/.git'
+        if ((Test-Path $pathToTest) -eq $TRUE) {
+            return $TRUE
+        } else {
+            $checkIn = $checkIn.parent
+        }
+    }
+
+    return $FALSE
+}
+
+function Get-ShowAsGitDirectory{
+    Param($directory)
+
+    # check if git directory
+    $isGitDirectory = Get-IsGitDirectory -directory $directory
+
+    # check if git is installed
+    $gitIsInstalled = Get-CommandExist -command "git"
+
+    if(-not $gitIsInstalled){
+        $isGitDirectory = $false
+    }
+
+    return $isGitDirectory
+}
+
+function Get-GitStatusItemList{
+    Param($directory)
+
+    # get the current directory
+    $currentPath = (Get-Location).Path
+
+    Set-Location -Path $directory
+    $gitStatus = git status --porcelain=v1
+    $gitRoot = git rev-parse --show-toplevel
+    Set-Location -Path $currentPath
+
+    $gitStatusItems = @()
+
+    foreach($gitStatusItem in $gitStatus){
+        $gs = $gitStatusItem.Trim().Split(" ")
+        $l = -join($gitRoot, "/", $gs[1])
+        $gitStatusItems += @{
+            status = $gs[0]
+            path = $l
+        }
+    }
+    return $gitStatusItems
+}
+
+function Get-GitColorAndIcon{
+    Param($isGitDirectory, $entity, $gitStatusItems, $glyphs)
+
+    if(-not $isGitDirectory){
+        return ""
+    }
+
+    $gitGlyph = $glyphs["nf-fa-check"]
+    $gitColor = (ConvertFrom-RGBColor -RGB ("00FF00"))
+    foreach($gitStatusItem in $gitStatusItems){
+        $updateGitStatus = $false
+        $currentItemForGitCompare = $entity.FullName -Replace "\\", "/"
+        if($currentItemForGitCompare -eq $gitStatusItem.path){
+            $updateGitStatus = $true
+        }elseif($isFolder -and ($gitStatusItem.path.StartsWith($currentItemForGitCompare,'CurrentCultureIgnoreCase'))){
+            $updateGitStatus = $true
+        }
+
+        if($updateGitStatus){
+            switch($gitStatusItem.status){
+                "??" {
+                    $gitGlyph = $glyphs["nf-fa-question"]
+                    $gitColor = (ConvertFrom-RGBColor -RGB ("FF0000"))
+                }
+                default{
+                    $gitGlyph = $gitStatusItem.status
+                    $gitColor = (ConvertFrom-RGBColor -RGB ("FFFF00"))
+                }
+            }
+        }
+    }
+    $gitColorAndIcon = "${gitColor}${gitGlyph} "
+    return $gitColorAndIcon
+}
