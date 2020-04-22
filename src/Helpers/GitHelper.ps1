@@ -1,5 +1,9 @@
 function Get-IsGitDirectory {
-    Param($directory)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$directory
+    )
+
     if ((Test-Path "${directory}/.git") -eq $TRUE) {
         return $TRUE
     }
@@ -19,7 +23,10 @@ function Get-IsGitDirectory {
 }
 
 function Get-ShowAsGitDirectory{
-    Param($directory)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$directory
+    )
 
     # check if git directory
     $isGitDirectory = Get-IsGitDirectory -directory $directory
@@ -35,7 +42,10 @@ function Get-ShowAsGitDirectory{
 }
 
 function Get-GitStatusItemList{
-    Param($directory)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$directory
+    )
 
     # get the current directory
     $currentPath = (Get-Location).Path
@@ -59,7 +69,19 @@ function Get-GitStatusItemList{
 }
 
 function Get-GitColorAndIcon{
-    Param($isGitDirectory, $entity, $gitStatusItems, $glyphs)
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$isGitDirectory,
+        
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$entity, 
+        
+        [Parameter(Mandatory = $true)]
+        [array]$gitStatusItems, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$glyphs
+    )
 
     if(-not $isGitDirectory){
         return ""

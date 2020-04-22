@@ -16,6 +16,103 @@ $colorTheme	= Import-PowerShellDataFile "${terminalIconsFolder}/Data/colorThemes
 . $PSScriptRoot/Helpers/FileAndFolderHelper.ps1
 . $PSScriptRoot/Helpers/ReportHelper.ps1
 
+function Splatter{
+    param($x)
+    return $x
+}    
+
+
+function Get-LongFormatPrintout{
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$e, 
+
+        [Parameter(Mandatory = $true)]
+        [bool]$isFolder, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$options, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$longFormatData,
+
+        [Parameter(Mandatory = $true)]
+        [string]$colorAndIcon, 
+
+        [Parameter(Mandatory = $true)]
+        [string]$nameOutput
+    )
+    
+    try{
+        $acl = Get-Acl $e.FullName
+        $owner = $acl.Owner
+        $group = $acl.Group
+    }catch{
+        $owner = ""
+        $group = ""
+    }
+
+    $lw = ($e.LastWriteTime).ToString("f")
+    if($isFolder){
+        if($options.showDirectorySize){
+            $size = Get-DirectorySize -directoryName $e.FullName
+        }else{
+            $size = ""
+        }
+    }else{
+        $size = Get-FriendlySize -bytes $e.Length
+    }
+
+    $sizeWithSpace = $size.PadRight(8)
+
+    $mode = Get-ModeForLongListing $e.Mode
+
+    try{
+        $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
+    }catch{
+        $ownerWithSpace = ""
+    }
+
+    try{
+        $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
+    }catch{
+        $groupWithSpace = ""
+    }
+    $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
+
+    $ownerColor = $longFormatData.ownerColor
+    $groupColor = $longFormatData.groupColor
+    $sizeColor = $longFormatData.sizeColor
+    $lwColor = $longFormatData.lwColor
+
+    if($availableCharWith -gt $longFormatData.fullItemMaxLength){
+        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
+        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
+        $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
+        $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }else{
+        $printout = "${sizeColor}${sizeWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }
+
+    return $printout
+}
+
+function Splat {
+
+    param(
+        [string]
+        $FunctionName,
+
+        [hashtable]
+        $Params
+    )
+
+    & $FunctionName @Params
+}
+
 function PowerColorLS{
 <#
  .Synopsis
@@ -139,37 +236,20 @@ function PowerColorLS{
     # get how many characters we have available in this console window
     $availableCharWith = (Get-Host).ui.rawui.buffersize.width
 
-    $ownerColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
-    $groupColor = (ConvertFrom-RGBColor -RGB ("D3D865"))
-    $lwColor = (ConvertFrom-RGBColor -RGB ("45B2A1"))
-    $sizeColor = (ConvertFrom-RGBColor -RGB ("FDFFBA"))
-
     $fileCount = 0
     $folderCount = 0
 
     # start iterating over our items
 	foreach ($e in $filesAndFolders) {
-		$isFolder = Test-Path -path ($e.FullName) -pathtype container
-
-		$fileExt = [System.IO.Path]::GetExtension($e.name)
+		$isFolder = Get-IsFolder -fullName $e.FullName
+        $fileExt = Get-FileExtension -fileName $e.FullName
+        
 		$name = $e.name
         $extra = ""
 
-        $ignoreFile = $false
+        $ignoreItem = Get-IgnoreItem -options $options -name $name -isFolder $isFolder
 
-        if((-not $options.showHiddenFiles) -and ($name.StartsWith("."))) {
-            $ignoreFile = $true
-        }
-
-        if(($options.dirOnly) -and (-not $isFolder)) {
-            $ignoreFile = $true
-        }
-
-        if(($options.fileOnly) -and ($isFolder)) {
-            $ignoreFile = $true
-        }
-
-        if(-not $ignoreFile){
+        if(-not $ignoreItem){
 
             if($isFolder){
                 $extra = "\"
@@ -191,54 +271,15 @@ function PowerColorLS{
             $nameOutput = "${name}${extra}"
 
             if($options.longFormat){
-                try{
-                    $acl = Get-Acl $e.FullName
-                    $owner = $acl.Owner
-                    $group = $acl.Group
-                }catch{
-                    $owner = ""
-                    $group = ""
+                $printout = Splat Get-LongFormatPrintout @{
+                    e = $e
+                    isFolder = $isFolder
+                    options = $options
+                    longFormatData = $longFormatData
+                    colorAndIcon = $colorAndIcon
+                    nameOutput = $nameOutput
                 }
 
-                $lw = ($e.LastWriteTime).ToString("f")
-                if($isFolder){
-                    if($options.showDirectorySize){
-                        $directorySizeInBytes = ((Get-Childitem $e.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | Select-Object sum).sum)
-                        $size = Get-FriendlySize -bytes $directorySizeInBytes
-                    }else{
-                        $size = ""
-                    }
-                }else{
-                    $size = Get-FriendlySize -bytes $e.Length
-                }
-                $sizeWithSpace = $size.PadRight(8)
-
-                $mode = Get-ModeForLongListing $e.Mode
-
-                try{
-                    $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
-                }catch{
-                    $ownerWithSpace = ""
-                }
-
-                try{
-                    $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
-                }catch{
-                    $groupWithSpace = ""
-                }
-                $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
-
-                if($availableCharWith -gt $longFormatData.fullItemMaxLength){
-                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-                }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
-                    $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-                }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
-                    $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-                }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
-                    $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-                }else{
-                    $printout = "${sizeColor}${sizeWithSpace}  ${colorAndIcon} ${nameOutput}"
-                }
             }else{
                 $printout = "${icon} ${nameOutput}" + (" "*($longestItemLength - $nameOutput.length + $itemSpacerWidth))
                 $lineCharsCounter += $printout.length
@@ -246,7 +287,7 @@ function PowerColorLS{
                     $lineCharsCounter += 2
                 }
             }
-
+            
             if ((-not $options.oneEntryPerLine) -and(-not $options.longFormat) -and ( $lineCharsCounter -ge ($availableCharWith)) ) {
                 Write-Host ""
                 $lineCharsCounter = $printout.length

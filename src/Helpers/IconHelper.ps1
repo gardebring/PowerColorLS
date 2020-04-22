@@ -1,5 +1,9 @@
 function Get-PatchedPowerColorLSIcon{
-    Param($iconName)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$iconName
+    )
+
     switch($iconName){
         "nf-mdi-view_list"{
             return "nf-fa-th_list"
@@ -14,7 +18,13 @@ function Get-PatchedPowerColorLSIcon{
 }
 
 function Get-FolderIconName{
-    Param($name, $iconTheme)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$name,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$iconTheme
+    )
 
     $iconName = $iconTheme.Types.Directories.WellKnown[$name]
 
@@ -26,7 +36,17 @@ function Get-FolderIconName{
 }
 
 function Get-FileIconName{
-    Param($name, $fileExt, $iconTheme)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+        
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$iconTheme
+    )
 
     $iconName = $iconTheme.Types.Files.WellKnown[$name]
     if($null -eq $iconName){
@@ -41,7 +61,21 @@ function Get-FileIconName{
 
 
 function Get-ItemIconName{
-    Param($isFolder, $name, $fileExt, $iconTheme)
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$isFolder, 
+        
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+        
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$iconTheme
+    )
+
     if($isFolder){
         $iconName = Get-FolderIconName -name $name -iconTheme $iconTheme
     }else{
@@ -54,7 +88,23 @@ function Get-ItemIconName{
 }
 
 function Get-ItemIcon{
-    Param($isFolder, $name, $fileExt, $iconTheme, $glyphs)
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$isFolder, 
+
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$iconTheme,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$glyphs
+    )
 
     $iconName = Get-ItemIconName -isFolder $isFolder -name $name -fileExt $fileExt -iconTheme $iconTheme
 

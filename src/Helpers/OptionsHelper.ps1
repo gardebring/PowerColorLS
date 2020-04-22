@@ -1,5 +1,9 @@
 function Get-OptionsResult{
-    Param([array] $arguments)
+    
+    param(
+        [array] $arguments
+    )
+
     $options = @{
         oneEntryPerLine = $false
         showHiddenFiles = $false

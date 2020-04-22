@@ -1,5 +1,8 @@
 function Get-CommandExist{
-    Param ($command)
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$command
+    )
     $oldPreference = $ErrorActionPreference
     $ErrorActionPreference = "stop"
     Try {if(Get-Command $command){return $true}}

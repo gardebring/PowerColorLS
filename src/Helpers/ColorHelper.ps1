@@ -1,5 +1,11 @@
 function Get-FolderColorHex{
-    Param($name, $colorTheme)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$colorTheme
+    )
 
     $colorHex = $colorTheme.Types.Directories.WellKnown[$name]
     if($null -eq $colorHex){
@@ -10,7 +16,17 @@ function Get-FolderColorHex{
 }
 
 function Get-FileColorHex{
-    Param($name, $fileExt, $colorTheme)
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+        
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$colorTheme
+    )
 
     $colorHex = $colorTheme.Types.Files.WellKnown[$name]
     if($null -eq $colorHex){
@@ -24,7 +40,20 @@ function Get-FileColorHex{
 }
 
 function Get-ItemColorHex{
-    Param($isFolder, $name, $fileExt, $colorTheme)
+    param(
+        [Parameter()]
+        [bool]$isFolder, 
+        
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt, 
+        
+        [Parameter(Mandatory = $true)]
+        [hashtable]$colorTheme
+    )
 
     if($isFolder){
         $colorHex = Get-FolderColorHex -name $name -colorTheme $colorTheme
@@ -35,7 +64,20 @@ function Get-ItemColorHex{
 }
 
 function Get-ItemColor{
-    Param($isFolder, $name, $fileExt, $colorTheme)
+    param(
+        [Parameter()]
+        [bool]$isFolder, 
+
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$fileExt, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$colorTheme
+    )
 
     $colorHex = Get-ItemColorHex -isFolder $isFolder -name $name -fileExt $fileExt -colorTheme $colorTheme
 

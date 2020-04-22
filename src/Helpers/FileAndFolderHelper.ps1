@@ -1,5 +1,8 @@
 function Get-FriendlySize {
-    param($bytes)
+    param(
+        [Parameter(Mandatory = $true)]
+        [long]$bytes
+    )
     $sizes='B,KB,MB,GB,TB,PB,EB,ZB' -split ','
     for($i=0; ($bytes -ge 1kb) -and
         ($i -lt $sizes.Count); $i++) {$bytes/=1kb}
@@ -7,8 +10,57 @@ function Get-FriendlySize {
     "{0:N$($N)} {1}" -f $bytes, $sizes[$i]
 }
 
+function Get-IsFolder {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$fullName
+    )
+    return Test-Path -path ($fullName) -pathtype container
+}
+
+function Get-FileExtension {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$fileName
+    )
+    return [System.IO.Path]::GetExtension($fileName)
+}
+
+function Get-IgnoreItem {
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$options, 
+        
+        [Parameter(Mandatory = $true)]
+        [string]$name, 
+        
+        [Parameter(Mandatory = $true)]
+        [bool]$isFolder
+    )
+
+    if((-not $options.showHiddenFiles) -and ($name.StartsWith("."))) {
+        return $true
+    }
+
+    if(($options.dirOnly) -and (-not $isFolder)) {
+        return $true
+    }
+
+    if(($options.fileOnly) -and ($isFolder)) {
+        return $true
+    }
+
+    return $false
+}
+
 function Get-FilesAndFoldersListing{
-    Param($options, $query)
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$options, 
+        
+        [Parameter(Mandatory = $true)]
+        [string]$query
+    )
     if($options.showHiddenFiles){
         return Get-ChildItem $query -force
     }else{
@@ -17,7 +69,10 @@ function Get-FilesAndFoldersListing{
 }
 
 function Get-DirectoryName{
-    Param($filesAndFolders)
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$filesAndFolders
+    )
 
     $f = $filesAndFolders[0]
 
@@ -28,8 +83,23 @@ function Get-DirectoryName{
     return $directoryName
 }
 
+function Get-DirectorySize{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$directoryName
+    )
+    $directorySizeInBytes = ((Get-Childitem $directoryName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Sum Length -ErrorAction SilentlyContinue | Select-Object sum).sum)
+    return Get-FriendlySize -bytes $directorySizeInBytes
+}
+
 function Get-SortedFilesAndFoldersListing{
-    Param($filesAndFolders, $options)
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$filesAndFolders, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$options
+    )
     if($options.sortByModificationTime){
         return $filesAndFolders  | Sort-Object Lastwritetime -descending
     }elseif($options.filesFirst){
