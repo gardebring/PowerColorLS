@@ -77,6 +77,7 @@ function Get-GitColorAndIcon{
         [System.IO.FileSystemInfo]$entity, 
         
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [array]$gitStatusItems, 
         
         [Parameter(Mandatory = $true)]
