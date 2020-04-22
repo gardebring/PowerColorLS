@@ -10,12 +10,20 @@ function Get-FriendlySize {
     "{0:N$($N)} {1}" -f $bytes, $sizes[$i]
 }
 
-function Get-IsFolder {
+#function Get-IsFolder {
+#    Param(
+#        [Parameter(Mandatory = $true)]
+#        [string]$fullName
+#    )
+#    return Test-Path -path ($fullName) -pathtype container
+#}
+
+function Get-IsDirectory{
     Param(
         [Parameter(Mandatory = $true)]
-        [string]$fullName
+        [System.IO.FileSystemInfo]$fileSystemInfo
     )
-    return Test-Path -path ($fullName) -pathtype container
+    return ($fileSystemInfo.GetType()) -eq [System.IO.DirectoryInfo]
 }
 
 function Get-FileExtension {
@@ -32,21 +40,20 @@ function Get-IgnoreItem {
         [hashtable]$options, 
         
         [Parameter(Mandatory = $true)]
-        [string]$name, 
-        
-        [Parameter(Mandatory = $true)]
-        [bool]$isFolder
+        [System.IO.FileSystemInfo]$fileSystemInfo
     )
 
-    if((-not $options.showHiddenFiles) -and ($name.StartsWith("."))) {
+    $isDirectory = Get-IsDirectory -fileSystemInfo $fileSystemInfo
+
+    if((-not $options.showHiddenFiles) -and ($fileSystemInfo.name.StartsWith("."))) {
         return $true
     }
 
-    if(($options.dirOnly) -and (-not $isFolder)) {
+    if(($options.dirOnly) -and (-not $isDirectory)) {
         return $true
     }
 
-    if(($options.fileOnly) -and ($isFolder)) {
+    if(($options.fileOnly) -and ($isDirectory)) {
         return $true
     }
 

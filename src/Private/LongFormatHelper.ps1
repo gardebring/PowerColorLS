@@ -1,3 +1,80 @@
+function Get-LongFormatPrintout{
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$fileSystemInfo, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$options, 
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$longFormatData,
+
+        [Parameter(Mandatory = $true)]
+        [string]$colorAndIcon, 
+
+        [Parameter(Mandatory = $true)]
+        [string]$nameOutput
+    )
+
+    $isDirectory = Get-IsDirectory -fileSystemInfo $fileSystemInfo
+    
+    try{
+        $acl = Get-Acl $fileSystemInfo.FullName
+        $owner = $acl.Owner
+        $group = $acl.Group
+    }catch{
+        $owner = ""
+        $group = ""
+    }
+
+    $lw = ($fileSystemInfo.LastWriteTime).ToString("f")
+    if($isDirectory){
+        if($options.showDirectorySize){
+            $size = Get-DirectorySize -directoryName $fileSystemInfo.FullName
+        }else{
+            $size = ""
+        }
+    }else{
+        $size = Get-FriendlySize -bytes $fileSystemInfo.Length
+    }
+
+    $sizeWithSpace = $size.PadRight(8)
+
+    $mode = Get-ModeForLongListing $fileSystemInfo.Mode
+
+    try{
+        $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
+    }catch{
+        $ownerWithSpace = ""
+    }
+
+    try{
+        $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
+    }catch{
+        $groupWithSpace = ""
+    }
+    $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
+
+    $ownerColor = $longFormatData.ownerColor
+    $groupColor = $longFormatData.groupColor
+    $sizeColor = $longFormatData.sizeColor
+    $lwColor = $longFormatData.lwColor
+
+    if($availableCharWith -gt $longFormatData.fullItemMaxLength){
+        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
+        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
+        $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
+        $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }else{
+        $printout = "${sizeColor}${sizeWithSpace}  ${colorAndIcon} ${nameOutput}"
+    }
+
+    return $printout
+}
+
 function Get-LongFormatData{
     param(
         [Parameter(Mandatory = $true)]

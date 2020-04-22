@@ -6,112 +6,15 @@ $iconTheme 	= Import-PowerShellDataFile "${terminalIconsFolder}/Data/iconThemes/
 $colorTheme	= Import-PowerShellDataFile "${terminalIconsFolder}/Data/colorThemes/$theme.psd1"
 . $terminalIconsFolder/Private/ConvertFrom-RGBColor.ps1
 
-. $PSScriptRoot/Helpers/CommandHelper.ps1
-. $PSScriptRoot/Helpers/InfoHelper.ps1
-. $PSScriptRoot/Helpers/GitHelper.ps1
-. $PSScriptRoot/Helpers/OptionsHelper.ps1
-. $PSScriptRoot/Helpers/LongFormatHelper.ps1
-. $PSScriptRoot/Helpers/ColorHelper.ps1
-. $PSScriptRoot/Helpers/IconHelper.ps1
-. $PSScriptRoot/Helpers/FileAndFolderHelper.ps1
-. $PSScriptRoot/Helpers/ReportHelper.ps1
-
-function Splatter{
-    param($x)
-    return $x
-}    
-
-
-function Get-LongFormatPrintout{
-    param(
-        [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$e, 
-
-        [Parameter(Mandatory = $true)]
-        [bool]$isFolder, 
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$options, 
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$longFormatData,
-
-        [Parameter(Mandatory = $true)]
-        [string]$colorAndIcon, 
-
-        [Parameter(Mandatory = $true)]
-        [string]$nameOutput
-    )
-    
-    try{
-        $acl = Get-Acl $e.FullName
-        $owner = $acl.Owner
-        $group = $acl.Group
-    }catch{
-        $owner = ""
-        $group = ""
+# Dot source private functions
+(Get-ChildItem -Path ("$PSScriptRoot/Private/*.ps1") -Recurse -ErrorAction Stop).ForEach({
+    try {
+        . $_.FullName
+    } catch {
+        throw $_
+        $PSCmdlet.ThrowTerminatingError("Unable to load [$($import.FullName)]")
     }
-
-    $lw = ($e.LastWriteTime).ToString("f")
-    if($isFolder){
-        if($options.showDirectorySize){
-            $size = Get-DirectorySize -directoryName $e.FullName
-        }else{
-            $size = ""
-        }
-    }else{
-        $size = Get-FriendlySize -bytes $e.Length
-    }
-
-    $sizeWithSpace = $size.PadRight(8)
-
-    $mode = Get-ModeForLongListing $e.Mode
-
-    try{
-        $ownerWithSpace = "${owner}" + (" "*($longFormatData.longestOwnerAclLength - $owner.length))
-    }catch{
-        $ownerWithSpace = ""
-    }
-
-    try{
-        $groupWithSpace = "${group}" + (" "*($longFormatData.longestGroupAclLength - $group.length))
-    }catch{
-        $groupWithSpace = ""
-    }
-    $lwWithSpace = "${lw}" + (" "*($longFormatData.longestDateLength - $lw.Length))
-
-    $ownerColor = $longFormatData.ownerColor
-    $groupColor = $longFormatData.groupColor
-    $sizeColor = $longFormatData.sizeColor
-    $lwColor = $longFormatData.lwColor
-
-    if($availableCharWith -gt $longFormatData.fullItemMaxLength){
-        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${groupColor}${groupWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-    }elseif($availableCharWith -gt $longFormatData.noGroupMaxLength){
-        $printout = "${mode}  ${ownerColor}${ownerWithSpace}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerMaxLength){
-        $printout = "${mode}  ${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-    }elseif($availableCharWith -gt $longFormatData.noGroupOrOwnerOrModeMaxLength){
-        $printout = "${sizeColor}${sizeWithSpace}  ${lwColor}${lwWithSpace}  ${colorAndIcon} ${nameOutput}"
-    }else{
-        $printout = "${sizeColor}${sizeWithSpace}  ${colorAndIcon} ${nameOutput}"
-    }
-
-    return $printout
-}
-
-function Splat {
-
-    param(
-        [string]
-        $FunctionName,
-
-        [hashtable]
-        $Params
-    )
-
-    & $FunctionName @Params
-}
+})
 
 function PowerColorLS{
 <#
@@ -240,17 +143,15 @@ function PowerColorLS{
     $folderCount = 0
 
     # start iterating over our items
-	foreach ($e in $filesAndFolders) {
-		$isFolder = Get-IsFolder -fullName $e.FullName
-        $fileExt = Get-FileExtension -fileName $e.FullName
+	foreach ($fileSystemInfo in $filesAndFolders) {
+        $isFolder = Get-IsDirectory -fileSystemInfo $fileSystemInfo
         
-		$name = $e.name
+		$name = $fileSystemInfo.name
         $extra = ""
 
-        $ignoreItem = Get-IgnoreItem -options $options -name $name -isFolder $isFolder
+        $ignoreItem = Get-IgnoreItem -options $options -fileSystemInfo $fileSystemInfo
 
         if(-not $ignoreItem){
-
             if($isFolder){
                 $extra = "\"
                 $folderCount++
@@ -258,11 +159,11 @@ function PowerColorLS{
                 $fileCount++
             }
 
-            $color = Get-ItemColor -isFolder $isFolder -name $name -fileExt $fileExt -colorTheme $colorTheme
-            $icon = Get-ItemIcon -isFolder $isFolder -name $name -fileExt $fileExt -iconTheme $iconTheme -glyphs $glyphs
+            $color = Get-Color -fileSystemInfo $fileSystemInfo -colorTheme $colorTheme
+            $icon = Get-Icon -fileSystemInfo $fileSystemInfo -iconTheme $iconTheme -glyphs $glyphs
             $colorAndIcon = "${color}${icon}"
 
-            $gitColorAndIcon = Get-GitColorAndIcon -isGitDirectory $isGitDirectory -entity $e -gitStatusItems $gitStatusItems -glyphs $glyphs
+            $gitColorAndIcon = Get-GitColorAndIcon -isGitDirectory $isGitDirectory -fileSystemInfo $fileSystemInfo -gitStatusItems $gitStatusItems -glyphs $glyphs
 
             if($IsGitDirectory){
                 $colorAndIcon = "${gitColorAndIcon}${colorAndIcon}"
@@ -272,8 +173,7 @@ function PowerColorLS{
 
             if($options.longFormat){
                 $printout = Splat Get-LongFormatPrintout @{
-                    e = $e
-                    isFolder = $isFolder
+                    fileSystemInfo = $fileSystemInfo
                     options = $options
                     longFormatData = $longFormatData
                     colorAndIcon = $colorAndIcon

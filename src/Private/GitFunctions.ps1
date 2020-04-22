@@ -74,7 +74,7 @@ function Get-GitColorAndIcon{
         [bool]$isGitDirectory,
         
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$entity, 
+        [System.IO.FileSystemInfo]$fileSystemInfo, 
         
         [Parameter(Mandatory = $true)]
         [AllowNull()]
