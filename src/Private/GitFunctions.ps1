@@ -1,3 +1,29 @@
+function Get-GitInfo {
+    param(
+        [Parameter(Mandatory = $true)]
+        [array]$filesAndFolders
+    )
+
+    $directoryName = Get-DirectoryName -filesAndFolders $filesAndFolders
+
+    # determine if we should handle this as git directory
+    $isGitDirectory = Get-ShowAsGitDirectory -directory $directoryName
+
+    $lineCharsCounterIncrease = 0
+
+    if($isGitDirectory){
+        $gitStatusItems = Get-GitStatusItemList -directory $directoryName
+        $lineCharsCounterIncrease = 2
+    }
+
+    return @{
+        isGitDirectory = $isGitDirectory
+        gitStatusItems = $gitStatusItems
+        lineCharsCounterIncrease = $lineCharsCounterIncrease
+    }
+}
+
+
 function Get-IsGitDirectory {
     param(
         [Parameter(Mandatory = $true)]
@@ -71,26 +97,22 @@ function Get-GitStatusItemList{
 function Get-GitColorAndIcon{
     param(
         [Parameter(Mandatory = $true)]
-        [bool]$isGitDirectory,
+        [hashtable]$gitInfo,
         
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$fileSystemInfo, 
-        
-        [Parameter(Mandatory = $true)]
-        [AllowNull()]
-        [array]$gitStatusItems, 
-        
+        $fileSystemInfo, 
+             
         [Parameter(Mandatory = $true)]
         [hashtable]$glyphs
     )
 
-    if(-not $isGitDirectory){
+    if(-not $gitInfo.isGitDirectory){
         return ""
     }
 
     $gitGlyph = $glyphs["nf-fa-check"]
     $gitColor = (ConvertFrom-RGBColor -RGB ("00FF00"))
-    foreach($gitStatusItem in $gitStatusItems){
+    foreach($gitStatusItem in $gitInfo.gitStatusItems){
         $updateGitStatus = $false
         $currentItemForGitCompare = $entity.FullName -Replace "\\", "/"
         if($currentItemForGitCompare -eq $gitStatusItem.path){

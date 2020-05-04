@@ -1,7 +1,23 @@
+function ConvertFrom-RGBColor {
+    [OutputType([System.String])]
+    param(
+        [parameter(Mandatory)]
+        [string]$RGB
+    )
+
+    $RGB = $RGB.Replace('#', '')
+    $r   = [convert]::ToInt32($RGB.SubString(0,2), 16)
+    $g   = [convert]::ToInt32($RGB.SubString(2,2), 16)
+    $b   = [convert]::ToInt32($RGB.SubString(4,2), 16)
+
+    $escape = [char]27
+    return "${escape}[38;2;$r;$g;$b`m"
+}
+
 function Get-Color{
     param(
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$fileSystemInfo, 
+        $fileSystemInfo, 
 
         [Parameter(Mandatory = $true)]
         [hashtable]$colorTheme
@@ -17,7 +33,7 @@ function Get-Color{
 function Get-ColorHex{
     param(
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$fileSystemInfo, 
+        $fileSystemInfo, 
         
         [Parameter(Mandatory = $true)]
         [hashtable]$colorTheme

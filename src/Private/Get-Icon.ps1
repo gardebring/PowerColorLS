@@ -1,7 +1,7 @@
 function Get-Icon{
     param(
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$fileSystemInfo, 
+        $fileSystemInfo, 
 
         [Parameter(Mandatory = $true)]
         [hashtable]$iconTheme,
@@ -19,7 +19,7 @@ function Get-Icon{
 function Get-IconName{
     param(
         [Parameter(Mandatory = $true)]
-        [System.IO.FileSystemInfo]$fileSystemInfo, 
+        $fileSystemInfo, 
         
         [Parameter(Mandatory = $true)]
         [hashtable]$iconTheme

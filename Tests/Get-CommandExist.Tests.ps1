@@ -1,6 +1,6 @@
 $ROOT = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-.$ROOT\..\src\Helpers\CommandHelper.ps1
+.$ROOT\..\src\Private\Get-CommandExist.ps1
 
 Describe "Command Helper Tests" {
     Context "When testing for command that does not exist" {
