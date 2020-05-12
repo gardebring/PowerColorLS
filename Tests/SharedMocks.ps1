@@ -23,11 +23,15 @@ function Get-MockedFileInfo{
         [datetime]$lastWriteTime
     )
     $obj = New-MockObject -Type System.IO.FileInfo
+    Add-MockProperty -obj $obj -name "PSPath" -value "Microsoft.PowerShell.Core\FileSystem::${MockedDirectoryName}\${name}"
     Add-MockProperty -obj $obj -name "Name" -value $name
     Add-MockProperty -obj $obj -name "FullName" -value "${MockedDirectoryName}\${name}"
     Add-MockProperty -obj $obj -name "LastWriteTime" -value $lastWriteTime
     Add-MockProperty -obj $obj -name "Parent" -value @{FullName = $MockedDirectoryName}
     Add-MockProperty -obj $obj -name "DirectoryName" -value $null
+    Add-MockProperty -obj $obj -name "Extension" -value [System.IO.Path]::GetExtension($name)
+    Add-MockProperty -obj $obj -name "Exists" -value $true
+    Add-MockProperty -obj $obj -name "Mode" -value "-a---"
     return $obj
 }
 
@@ -37,11 +41,15 @@ function Get-MockedDirectoryInfo{
         [datetime]$lastWriteTime
     )
     $obj = New-MockObject -Type System.IO.DirectoryInfo
+    Add-MockProperty -obj $obj -name "PSPath" -value "Microsoft.PowerShell.Core\FileSystem::${MockedDirectoryName}\${name}"
     Add-MockProperty -obj $obj -name "Name" -value $name
     Add-MockProperty -obj $obj -name "FullName" -value "${MockedDirectoryName}\${name}"
     Add-MockProperty -obj $obj -name "LastWriteTime" -value $lastWriteTime
     Add-MockProperty -obj $obj -name "Parent" -value @{FullName = ""}
     Add-MockProperty -obj $obj -name "DirectoryName" -value ${MockedDirectoryName}
+    Add-MockProperty -obj $obj -name "Extension" -value [System.IO.Path]::GetExtension($name)
+    Add-MockProperty -obj $obj -name "Exists" -value $true
+    Add-MockProperty -obj $obj -name "Mode" -value "d----"
     return $obj
 }
 
@@ -57,6 +65,17 @@ function Get-MockedFileAndDirectoryListing{
     return $fakeListingOfFilesAndDirectories    
 }
 
+function Get-MockedItem{
+    param([string]$Path)
+    $files = Get-MockedFileAndDirectoryListing
+    $fileOrDir = $files[0]
+    if(($null -ne $Path) -and ("" -ne $Path)){
+        
+    }
+    $fileOrDir.Parent = $null
+    return $fileOrDir
+}
+
 function Get-MockedOptions{
     param([hashtable]$adjustments)
     $options = @{
@@ -67,6 +86,7 @@ function Get-MockedOptions{
         filesFirst = $false
         dirsFirst = $false
         longFormat = $false
+        showDirectorySize = $false
     }
     if($adjustments -ne $null){
         foreach($adjustmentKey in $adjustments.Keys){
@@ -76,3 +96,41 @@ function Get-MockedOptions{
     return $options
 }
 
+function Get-MockedDirectoryAcl{
+    param([string]$Path)
+    $obj = New-Object PSObject -Property @{
+        Owner       = "OWNER\user"
+        Group       = "GROUP\user"
+    }
+    return $obj
+}
+
+function Get-MockedFileAcl{
+    param([string]$Path)
+    $obj = New-Object PSObject -Property @{
+        Owner       = "OWNER\user"
+        Group       = "GROUP\user"
+    }
+    return $obj
+}
+
+
+function Get-MockedAclFromPipeline{
+    [cmdletbinding()]
+    param(
+        [parameter(ValueFromPipelineByPropertyName)]
+        $Name,
+        [parameter(ValueFromPipelineByPropertyName)]
+        $FullName,
+        [parameter(ValueFromPipelineByPropertyName)]
+        $DirectoryName
+    )
+
+    process {
+        if($null -eq $DirectoryName){
+            return Get-MockedDirectoryAcl
+        }else{
+            return Get-MockedFileAcl
+        }
+    }
+}

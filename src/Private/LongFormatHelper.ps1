@@ -56,7 +56,6 @@ function Get-LongFormatPrintout{
         $groupWithSpace = ""
     }
 
-    
     $lwSpace = $longFormatData.longestDateLength - $lastWriteTime.Length
 
     $lwWithSpace = "${lastWriteTime}" + (" "*($lwSpace))
@@ -96,28 +95,17 @@ function Get-LongFormatData{
     if($options.longFormat){
         Try {
             $acls = $filesAndFolders | get-acl
-
-            #Sometimes it seems powershell go haywire and cannot propertly sort by length, so using his hacky approach to get the longest owner instead:
-            #$longestOwnerAcl = ($acls | Select-Object Owner | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Owner
-            $longestOwnerAclLength = 0
-            foreach($acl in $acls){
-                $l = $acl.Owner.Length
-                if($l -gt $longestOwnerAclLength){
-                    $longestOwnerAclLength = $l
-                }
-            }
-
-            $longestGroupAcl = ($acls | Select-object Group | Sort-Object { "$_".Length } -descending | Select-Object -first 1).Group
+            $longestOwnerAcl = Get-LongestItem -items $acls -scriptBlock {return $item.Owner}
+            $longestGroupAcl = Get-LongestItem -items $acls -scriptBlock {return $item.Group}
         }
         Catch {
             $acls = ""
-            #$longestOwnerAcl = ""
             $longestGroupAcl = ""
         }
         Finally {
         }
 
-        $longestDate = ($filesAndFolders | Select-Object @{n="LastWriteTime";e={$_.Lastwritetime.ToString("f")}} | Sort-Object { "$_".Length } -descending | Select-Object -first 1).LastWriteTime
+        $longestDate = Get-LongestItem -items $filesAndFolders -scriptBlock {return $item.LastWriteTime.ToString("f")}
 
         $directoryName = Get-DirectoryName -filesAndFolders $filesAndFolders
 
@@ -130,7 +118,7 @@ function Get-LongFormatData{
             $gitIncrease = 0
         }
 
-        #$longestOwnerAclLength = $longestOwnerAcl.Length
+        $longestOwnerAclLength = $longestOwnerAcl.Length
         $longestGroupAclLength = $longestGroupAcl.Length
         $longestDateLength = $longestDate.Length + 1
 

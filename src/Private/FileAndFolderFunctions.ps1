@@ -118,6 +118,11 @@ function Get-LongestItemLength{
         [Parameter(Mandatory = $true)]
         [array]$filesAndFolders
     )
+
+
+    #$longestItem = Get-LongestItem -items $filesAndFolders -scriptBlock {return $item.Name}
+    #$longestItemLength = $longestItem.Name.Length
+
     # determine the longest items so we can adapt the list to the console window width
     #Sometimes it seems powershell go haywire and cannot propertly sort by length, so using his hacky approach to get the longest item instead:
     #$longestItem = $filesAndFolders | Select-Object Name, FullName | Sort-Object { "$_".Length } -descending | Select-Object -first 1

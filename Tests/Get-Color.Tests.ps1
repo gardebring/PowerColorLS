@@ -10,16 +10,16 @@ function Get-MockedColorTheme{
         Types = @{
             Directories = @{
                 WellKnown = @{
-                    '.git'    = 'FF4500'
+                    '.git' = 'FF4500'
                 }
             }
-            Files       = @{
+            Files = @{
                 WellKnown = @{
-                    '.gitignore'                    = 'FF4500'
-                    'LICENSE.md'                    = 'CD5C5C'
+                    '.gitignore' = 'FF4500'
+                    'LICENSE.md' = 'CD5C5C'
                 }
-                '.zip'                  = 'DAA520'
-                '.xml'                  = '98FB98'
+                '.zip' = 'DAA520'
+                '.xml' = '98FB98'
             }
         }
     }

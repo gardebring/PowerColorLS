@@ -36,8 +36,8 @@ function Get-IsGitDirectory {
 
     # Test within parent dirs
     $checkIn = (Get-Item ${directory}).parent
-    while ($NULL -ne $checkIn) {
-        $pathToTest = $checkIn.fullname + '/.git'
+    while ($null -ne $checkIn) {
+        $pathToTest = $checkIn.FullName + '/.git'
         if ((Test-Path $pathToTest) -eq $TRUE) {
             return $TRUE
         } else {

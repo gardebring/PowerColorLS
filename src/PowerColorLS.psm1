@@ -113,7 +113,7 @@ function PowerColorLS{
     $lineCharsCounter = 0
 
     # get how many characters we have available in this console window
-    $availableCharWith = (Get-Host).ui.rawui.buffersize.width
+    $availableCharWith = $host.ui.rawui.buffersize.width
 
     if($null -eq $availableCharWith){
         $availableCharWith = 150
