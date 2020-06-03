@@ -23,7 +23,7 @@ Describe "Show-Report Tests" {
     $query = "."
 
     Context "When showing short format report" {
-        It "Should write out expexted report" {
+        It "Should write out expected report" {
             $options = Get-MockedOptions
             [array]$filesAndFolders = (Get-FilesAndFoldersListing -options $options -query $query)
             $report = Show-Report -options $options -filesAndFolders $filesAndFolders -query $query
@@ -35,7 +35,7 @@ Describe "Show-Report Tests" {
     }
 
     Context "When showing long format report" {
-        It "Should write out expexted report" {
+        It "Should write out expected report" {
 
             $options = Get-MockedOptions -adjustments @{longFormat = $true;}
 

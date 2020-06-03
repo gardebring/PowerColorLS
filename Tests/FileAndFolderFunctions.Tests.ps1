@@ -27,30 +27,6 @@ function Get-MockedGetChildItem{
     return [array]$fakeListingOfDirectories
 }
 
-function Get-MockedOptions{
-    param([hashtable]$adjustments)
-    $options = @{
-        showHiddenFiles = $false
-        dirOnly = $false
-        fileOnly = $false
-        sortByModificationTime = $false
-        filesFirst = $false
-        dirsFirst = $false
-    }
-    if($adjustments -ne $null){
-        foreach($adjustmentKey in $adjustments.Keys){
-            $options[$adjustmentKey] = $adjustments[$adjustmentKey]
-        }
-    }
-    return $options
-}
-
-function Get-MockedOptionsWithHidden{
-    $options = Get-MockedOptions
-    $options.showHiddenFiles = $true
-    return $options
-}
-
 # tests
 
 Describe "FileAndFolder Functions Tests" {

@@ -1,3 +1,11 @@
+$glyphs =@{
+     'nf-fa-folder_o' = 'glyph-nf-fa-folder_o'
+    'nf-fa-archive' = 'glyph-nf-fa-archive'
+    'nf-fa-lock' = 'glyph-nf-fa-lock'
+    'nf-mdi-file_hidden' = 'glyph-nf-mdi-file_hidden'
+    'nf-fa-gear' = 'glyph-nf-fa-gear'
+}
+
 function Add-MockProperty{
     param(
         $obj,
@@ -87,6 +95,8 @@ function Get-MockedOptions{
         dirsFirst = $false
         longFormat = $false
         showDirectorySize = $false
+        oneEntryPerLine = $false
+        showReport = $false
     }
     if($adjustments -ne $null){
         foreach($adjustmentKey in $adjustments.Keys){

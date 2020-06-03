@@ -32,7 +32,7 @@ function Get-LongFormatTestData{
     }
 }
 
-Describe "FileAndFolder Functions Tests" {
+Describe "LongFormatHelper Functions Tests" {
     
     BeforeAll {
         Mock -CommandName Get-ChildItem -MockWith { 
@@ -54,6 +54,55 @@ Describe "FileAndFolder Functions Tests" {
         Mock -CommandName Write-Host -MockWith {
         }
     }
+
+    Context "When getting mode for long listing"{
+        It "Should return expected mode for mode d----" {
+            $mode = "d----"
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $color = Get-Mode-Attribute-Color -attribute "d"
+            $dashcolor = Get-Mode-Attribute-Color -attribute "-"
+            $modeForLongListing | Should be ("${color}glyph-nf-fa-folder_o ${dashcolor}- ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
+        }
+        It "Should return expected mode for mode d--h-" {
+            $mode = "d--h-"
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $colord = Get-Mode-Attribute-Color -attribute "d"
+            $colorh = Get-Mode-Attribute-Color -attribute "h"
+            $dashcolor = Get-Mode-Attribute-Color -attribute "-"
+            $modeForLongListing | Should be ("${colord}glyph-nf-fa-folder_o ${dashcolor}- ${dashcolor}- ${colorh}glyph-nf-mdi-file_hidden ${dashcolor}- ")
+        }
+
+        It "Should return expected mode for mode -a---" {
+            $mode = "-a---"
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $colora = Get-Mode-Attribute-Color -attribute "a"
+            $dashcolor = Get-Mode-Attribute-Color -attribute "-"
+            $modeForLongListing | Should be ("${dashcolor}- ${colora}glyph-nf-fa-archive ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
+        }
+
+        It "Should return expected mode for mode d-r-s" {
+            $mode = "d-r-s"
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $colord = Get-Mode-Attribute-Color -attribute "d"
+            $colorr = Get-Mode-Attribute-Color -attribute "r"
+            $colors = Get-Mode-Attribute-Color -attribute "s"
+            $dashcolor = Get-Mode-Attribute-Color -attribute "-"
+            $modeForLongListing | Should be ("${colord}glyph-nf-fa-folder_o ${dashcolor}- ${colorr}glyph-nf-fa-lock ${dashcolor}- ${colors}glyph-nf-fa-gear ")
+        }
+
+        It "Should return expected mode for mode la---" {
+            $mode = "la---"
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $colora = Get-Mode-Attribute-Color -attribute "a"
+            $dashcolor = Get-Mode-Attribute-Color -attribute "-"
+            $modeForLongListing | Should be ("${dashcolor}l ${colora}glyph-nf-fa-archive ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
+        }
+    }
+
+    <#
+    
+la---
+    #>
 
     Context "When getting long format data" {
         It "Should return null when not in long format" {

@@ -142,6 +142,34 @@ function Get-LongFormatData{
     return $null
 }
 
+function Get-Mode-Attribute-Color{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$attribute
+    )
+
+    switch($attribute){
+        "d" {
+            return (ConvertFrom-RGBColor -RGB ("EEEE8B"))
+        }
+        "a" {
+            return (ConvertFrom-RGBColor -RGB ("EE82EE"))
+        }
+        "r" {
+            return (ConvertFrom-RGBColor -RGB ("6382FF"))
+        }
+        "h" {
+            return (ConvertFrom-RGBColor -RGB ("BABABA"))
+        }
+        "s" {
+            return (ConvertFrom-RGBColor -RGB ("EDA1A1"))
+        }
+        default{
+            return (ConvertFrom-RGBColor -RGB ("EEEEEE"))
+        }
+    }
+}
+
 function Get-ModeForLongListing{
     param(
         [Parameter(Mandatory = $true)]
@@ -150,27 +178,25 @@ function Get-ModeForLongListing{
 
     $mode = ""
     foreach ($m in $modeInput.ToCharArray()) {
+        $color = Get-Mode-Attribute-Color($m)
         switch($m){
-            "-" {
-                $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) + "- "
-            }
             "d" {
-                $mode += (ConvertFrom-RGBColor -RGB ("EEEE8B")) + $glyphs["nf-fa-folder_o"] + " "
+                $mode += $color + $glyphs["nf-fa-folder_o"] + " "
             }
             "a" {
-                $mode += (ConvertFrom-RGBColor -RGB ("EE82EE")) + $glyphs["nf-fa-archive"] + " "
+                $mode += $color + $glyphs["nf-fa-archive"] + " "
             }
             "r" {
-                $mode += (ConvertFrom-RGBColor -RGB ("6382FF")) + $glyphs["nf-fa-lock"] + " "
+                $mode += $color + $glyphs["nf-fa-lock"] + " "
             }
             "h" {
-                $mode += (ConvertFrom-RGBColor -RGB ("BABABA")) + $glyphs["nf-mdi-file_hidden"] + " "
+                $mode += $color + $glyphs["nf-mdi-file_hidden"] + " "
             }
             "s" {
-                $mode += (ConvertFrom-RGBColor -RGB ("EDA1A1")) + $glyphs["nf-fa-gear"] + " "
+                $mode += $color + $glyphs["nf-fa-gear"] + " "
             }
             default{
-                $mode += (ConvertFrom-RGBColor -RGB ("EEEEEE")) +  $m + " "
+                $mode += $color +  $m + " "
             }
         }
     }
