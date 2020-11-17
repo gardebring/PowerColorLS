@@ -24,8 +24,7 @@ function PowerColorLS{
         -f, --files         show only files
         -ds, -sds, --sds, --show-directory-size
                             show directory size (can take a long time)
-        -hi, --hide-icons
-                            hide icons
+        -hi, --hide-icons   hide icons
 
         sorting options:
 
