@@ -18,7 +18,9 @@ Entries will be sorted alphabetically if no sorting option is specified.
         -d, --dirs          show only directories
         -f, --files         show only files
         -ds, -sds, --sds, --show-directory-size
-                        show directory size (can take a long time)
+                            show directory size (can take a long time)
+        -hi, --hide-icons
+                            hide icons
 
 sorting options:
 

@@ -15,6 +15,7 @@ function Get-OptionsResult{
         sortByModificationTime = $false
         showDirectorySize = $false
         showReport = $false
+        hideIcons = $false
     }
 
     $get_optionsResult = @{
@@ -72,6 +73,9 @@ function Get-OptionsResult{
                         }
                         {(($aDashParsed -eq "-r") -or ($aDashParsed -eq "-report"))} {
                             $options.showReport = $true
+                        }
+                        {(($aDashParsed -eq "-hi") -or ($aDashParsed -eq "-hide-icons"))} {
+                            $options.hideIcons = $true
                         }
                         default{
                             if($a -like('-*')){

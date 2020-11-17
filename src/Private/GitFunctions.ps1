@@ -103,14 +103,22 @@ function Get-GitColorAndIcon{
         $fileSystemInfo, 
              
         [Parameter(Mandatory = $true)]
-        [hashtable]$glyphs
+        [hashtable]$glyphs,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$hideIcons
     )
 
     if(-not $gitInfo.isGitDirectory){
         return ""
     }
 
-    $gitGlyph = $glyphs["nf-fa-check"]
+    if($hideIcons){
+        $gitGlyph = "√";
+    }else{
+        $gitGlyph = $glyphs["nf-fa-check"]
+    }
+
     $gitColor = (ConvertFrom-RGBColor -RGB ("00FF00"))
     foreach($gitStatusItem in $gitInfo.gitStatusItems){
         $updateGitStatus = $false
@@ -124,7 +132,11 @@ function Get-GitColorAndIcon{
         if($updateGitStatus){
             switch($gitStatusItem.status){
                 "??" {
-                    $gitGlyph = $glyphs["nf-fa-question"]
+                    if($hideIcons){
+                        $gitGlyph = "?";
+                    }else{
+                        $gitGlyph = $glyphs["nf-fa-question"]
+                    }
                     $gitColor = (ConvertFrom-RGBColor -RGB ("FF0000"))
                 }
                 default{

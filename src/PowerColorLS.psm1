@@ -24,6 +24,8 @@ function PowerColorLS{
         -f, --files         show only files
         -ds, -sds, --sds, --show-directory-size
                             show directory size (can take a long time)
+        -hi, --hide-icons
+                            hide icons
 
         sorting options:
 
@@ -123,12 +125,16 @@ function PowerColorLS{
 	foreach ($fileSystemInfo in $filesAndFolders) {
 
         $color = Get-Color -fileSystemInfo $fileSystemInfo -colorTheme $colorTheme
-        $icon = Get-Icon -fileSystemInfo $fileSystemInfo -iconTheme $iconTheme -glyphs $glyphs
+        if(-not $options.hideIcons){
+            $icon = Get-Icon -fileSystemInfo $fileSystemInfo -iconTheme $iconTheme -glyphs $glyphs
+        }
+        
         $colorAndIcon = "${color}${icon}"
 
-        $gitColorAndIcon = Get-GitColorAndIcon -gitInfo $gitInfo -fileSystemInfo $fileSystemInfo -glyphs $glyphs
-
+        
+        $gitColorAndIcon = Get-GitColorAndIcon -gitInfo $gitInfo -fileSystemInfo $fileSystemInfo -glyphs $glyphs -hideIcons $options.hideIcons
         $colorAndIcon = "${gitColorAndIcon}${colorAndIcon}"
+        
 
         if($options.longFormat){
             $printout = Splat Get-LongFormatPrintout @{
@@ -141,7 +147,11 @@ function PowerColorLS{
 
         }else{
             $nameForDisplay = Get-NameForDisplay -fileSystemInfo $fileSystemInfo
-            $printout = "${icon} ${nameForDisplay}" + (" "*($longestItemLength - $nameForDisplay.length + $itemSpacerWidth))
+            if($options.hideIcons){
+                $printout = "${icon}${nameForDisplay}" + (" "*($longestItemLength - $nameForDisplay.length + $itemSpacerWidth))
+            }else{
+                $printout = "${icon} ${nameForDisplay}" + (" "*($longestItemLength - $nameForDisplay.length + $itemSpacerWidth))
+            }
             $lineCharsCounter += ($printout.length + $gitInfo.lineCharsCounterIncrease)
         }
 
