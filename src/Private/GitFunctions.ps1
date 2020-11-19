@@ -122,7 +122,7 @@ function Get-GitColorAndIcon{
     $gitColor = (ConvertFrom-RGBColor -RGB ("00FF00"))
     foreach($gitStatusItem in $gitInfo.gitStatusItems){
         $updateGitStatus = $false
-        $currentItemForGitCompare = $entity.FullName -Replace "\\", "/"
+        $currentItemForGitCompare = $fileSystemInfo.FullName -Replace "\\", "/" 
         if($currentItemForGitCompare -eq $gitStatusItem.path){
             $updateGitStatus = $true
         }elseif($isFolder -and ($gitStatusItem.path.StartsWith($currentItemForGitCompare,'CurrentCultureIgnoreCase'))){
