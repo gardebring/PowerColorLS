@@ -127,13 +127,12 @@ function PowerColorLS{
         if(-not $options.hideIcons){
             $icon = Get-Icon -fileSystemInfo $fileSystemInfo -iconTheme $iconTheme -glyphs $glyphs
         }
-        
+
         $colorAndIcon = "${color}${icon}"
 
-        
         $gitColorAndIcon = Get-GitColorAndIcon -gitInfo $gitInfo -fileSystemInfo $fileSystemInfo -glyphs $glyphs -hideIcons $options.hideIcons
         $colorAndIcon = "${gitColorAndIcon}${colorAndIcon}"
-        
+
 
         if($options.longFormat){
             $printout = Splat Get-LongFormatPrintout @{

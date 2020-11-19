@@ -17,7 +17,7 @@ function Get-LongFormatTestData{
     $longestItemLength = Get-LongestItemLength -filesAndFolders $filesAndFolders
     $longFormatData = Get-LongFormatData -options $options -filesAndFolders $filesAndFolders -longestItemLength $longestItemLength
     $colorAndIcon = " "
-    $expectedMode = Get-ModeForLongListing -modeInput $filesAndFolders[0].Mode
+    $expectedMode = Get-ModeForLongListing -modeInput $filesAndFolders[0].Mode -hideIcons $false
 
     $lfp0 = Get-LongFormatPrintout -fileSystemInfo $filesAndFolders[0] -options $options -longFormatData $longFormatData -colorAndIcon $colorAndIcon -availableCharWith $availableCharWith
     $lfp2 = Get-LongFormatPrintout -fileSystemInfo $filesAndFolders[2] -options $options -longFormatData $longFormatData -colorAndIcon $colorAndIcon -availableCharWith $availableCharWith
@@ -58,14 +58,14 @@ Describe "LongFormatHelper Functions Tests" {
     Context "When getting mode for long listing"{
         It "Should return expected mode for mode d----" {
             $mode = "d----"
-            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode -hideIcons $false
             $color = Get-Mode-Attribute-Color -attribute "d"
             $dashcolor = Get-Mode-Attribute-Color -attribute "-"
             $modeForLongListing | Should be ("${color}glyph-nf-fa-folder_o ${dashcolor}- ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
         }
         It "Should return expected mode for mode d--h-" {
             $mode = "d--h-"
-            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode -hideIcons $false
             $colord = Get-Mode-Attribute-Color -attribute "d"
             $colorh = Get-Mode-Attribute-Color -attribute "h"
             $dashcolor = Get-Mode-Attribute-Color -attribute "-"
@@ -74,7 +74,7 @@ Describe "LongFormatHelper Functions Tests" {
 
         It "Should return expected mode for mode -a---" {
             $mode = "-a---"
-            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode -hideIcons $false
             $colora = Get-Mode-Attribute-Color -attribute "a"
             $dashcolor = Get-Mode-Attribute-Color -attribute "-"
             $modeForLongListing | Should be ("${dashcolor}- ${colora}glyph-nf-fa-archive ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
@@ -82,7 +82,7 @@ Describe "LongFormatHelper Functions Tests" {
 
         It "Should return expected mode for mode d-r-s" {
             $mode = "d-r-s"
-            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode -hideIcons $false
             $colord = Get-Mode-Attribute-Color -attribute "d"
             $colorr = Get-Mode-Attribute-Color -attribute "r"
             $colors = Get-Mode-Attribute-Color -attribute "s"
@@ -92,7 +92,7 @@ Describe "LongFormatHelper Functions Tests" {
 
         It "Should return expected mode for mode la---" {
             $mode = "la---"
-            $modeForLongListing = Get-ModeForLongListing -modeInput $mode
+            $modeForLongListing = Get-ModeForLongListing -modeInput $mode -hideIcons $false
             $colora = Get-Mode-Attribute-Color -attribute "a"
             $dashcolor = Get-Mode-Attribute-Color -attribute "-"
             $modeForLongListing | Should be ("${dashcolor}l ${colora}glyph-nf-fa-archive ${dashcolor}- ${dashcolor}- ${dashcolor}- ")
@@ -208,7 +208,7 @@ la---
             $dt0 = $lftd.dt0
             $dt2 = $lftd.dt2
 
-             $lftd.mode0Ok | Should -Be $false
+            $lftd.mode0Ok | Should -Be $false
             $lftd.lfp0 | Should -Not -BeLike "*OWNER\user*"
             $lftd.lfp0 | Should -Not -BeLike "*GROUP\user*"
             $lftd.lfp0 | Should -Not -BeLike "*${dt0}*"
