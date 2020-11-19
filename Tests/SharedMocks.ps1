@@ -97,6 +97,7 @@ function Get-MockedOptions{
         showDirectorySize = $false
         oneEntryPerLine = $false
         showReport = $false
+        hideIcons = $false
     }
     if($adjustments -ne $null){
         foreach($adjustmentKey in $adjustments.Keys){

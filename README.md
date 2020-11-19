@@ -67,6 +67,7 @@ Entries will be sorted alphabetically if no sorting option is specified.
         -f, --files             show only files
         -ds, -sds, --sds, --show-directory-size
                                 show directory size (can take a long time)
+        -hi, --hide-icons       hide icons
 
 sorting options:
 

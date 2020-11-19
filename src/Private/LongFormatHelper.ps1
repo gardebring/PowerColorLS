@@ -18,7 +18,7 @@ function Get-LongFormatPrintout{
 
     $isDirectory = Get-IsDirectory -fileSystemInfo $fileSystemInfo
     $nameForDisplay = Get-NameForDisplay -fileSystemInfo $fileSystemInfo
-    $mode = Get-ModeForLongListing $fileSystemInfo.Mode
+    $mode = Get-ModeForLongListing -modeInput $fileSystemInfo.Mode -hideIcons $options.hideIcons
     $lastWriteTime = ($fileSystemInfo.LastWriteTime).ToString("f")
 
     try{
@@ -173,30 +173,37 @@ function Get-Mode-Attribute-Color{
 function Get-ModeForLongListing{
     param(
         [Parameter(Mandatory = $true)]
-        [string]$modeInput
+        [string]$modeInput,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$hideIcons
     )
 
     $mode = ""
     foreach ($m in $modeInput.ToCharArray()) {
         $color = Get-Mode-Attribute-Color($m)
-        switch($m){
-            "d" {
-                $mode += $color + $glyphs["nf-fa-folder_o"] + " "
-            }
-            "a" {
-                $mode += $color + $glyphs["nf-fa-archive"] + " "
-            }
-            "r" {
-                $mode += $color + $glyphs["nf-fa-lock"] + " "
-            }
-            "h" {
-                $mode += $color + $glyphs["nf-mdi-file_hidden"] + " "
-            }
-            "s" {
-                $mode += $color + $glyphs["nf-fa-gear"] + " "
-            }
-            default{
-                $mode += $color +  $m + " "
+        if($hideIcons){
+            $mode += $color + $m + " "
+        }else{
+            switch($m){
+                "d" {
+                    $mode += $color + $glyphs["nf-fa-folder_o"] + " "
+                }
+                "a" {
+                    $mode += $color + $glyphs["nf-fa-archive"] + " "
+                }
+                "r" {
+                    $mode += $color + $glyphs["nf-fa-lock"] + " "
+                }
+                "h" {
+                    $mode += $color + $glyphs["nf-mdi-file_hidden"] + " "
+                }
+                "s" {
+                    $mode += $color + $glyphs["nf-fa-gear"] + " "
+                }
+                default{
+                    $mode += $color +  $m + " "
+                }
             }
         }
     }
