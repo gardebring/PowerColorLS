@@ -10,7 +10,7 @@
 RootModule = 'PowerColorLS.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.2'
+ModuleVersion = '1.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -25,7 +25,7 @@ Author = 'Anders Gardebring'
 CompanyName = 'Unknown'
 
 # Copyright statement for this module
-Copyright = 'Copyright (c) 2020 Anders Gardebring'
+Copyright = 'Copyright (c) 2020-2021 Anders Gardebring'
 
 # Description of the functionality provided by this module
 Description = 'List information about files and directories (the current directory by default).

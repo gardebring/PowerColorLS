@@ -74,7 +74,11 @@ function Get-NameForDisplay{
     $name = $fileSystemInfo.Name
 
     if($isDirectory){
-        return "${name}\"
+        if($IsWindows -eq $True){
+            return "${name}\"
+        }else{
+            return "/${name}"
+        }
     }else{
         return $name
     }
