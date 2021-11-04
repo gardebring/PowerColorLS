@@ -94,7 +94,9 @@ function PowerColorLS{
     # get the items
     $filesAndFolders = Get-FilesAndFoldersListing -options $options -query $query
 
-    if($filesAndFolders.Length -eq 0){ # nothing found
+    $fileAndFolderCount = ($filesAndFolders | Measure-Object).Count
+
+    if($fileAndFolderCount -eq 0){ # nothing found
         return
     }
 
