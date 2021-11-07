@@ -3,7 +3,7 @@ function Get-GitInfo {
         [Parameter(Mandatory = $true)]
         [array]$filesAndFolders
     )
-
+    
     $directoryName = Get-DirectoryName -filesAndFolders $filesAndFolders
 
     # determine if we should handle this as git directory

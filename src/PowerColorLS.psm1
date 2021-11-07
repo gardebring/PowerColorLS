@@ -93,11 +93,7 @@ function PowerColorLS{
 
     # get the items
     $filesAndFolders = Get-FilesAndFoldersListing -options $options -query $query
-
-    if($filesAndFolders.Length -eq 0){ # nothing found
-        return
-    }
-
+   
     # are we in a git directory? If so, get the data we need
     $gitInfo = Get-GitInfo -filesAndFolders $filesAndFolders
 
@@ -110,7 +106,7 @@ function PowerColorLS{
         longestItemLength = $longestItemLength
     }
 
-	$itemSpacerWidth = 4
+    $itemSpacerWidth = 4
     $lineCharsCounter = 0
 
     # get how many characters we have available in this console window
@@ -121,7 +117,7 @@ function PowerColorLS{
     }
 
     # start iterating over our items
-	foreach ($fileSystemInfo in $filesAndFolders) {
+    foreach ($fileSystemInfo in $filesAndFolders) {
 
         $color = Get-Color -fileSystemInfo $fileSystemInfo -colorTheme $colorTheme
         if(-not $options.hideIcons){
@@ -165,7 +161,7 @@ function PowerColorLS{
         }else{
             Write-Host "${gitColorAndIcon}${color}${printout}" -nonewline
         }
-	}
+    }
 
     if($options.showReport){
         Show-Report -options $options -filesAndFolders $filesAndFolders -query $query

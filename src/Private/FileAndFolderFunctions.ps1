@@ -40,11 +40,6 @@ function Get-FilesAndFoldersListing{
         $filesAndFolders = Get-ChildItem -Path $query
     }
 
-    
-    if($filesAndFolders.Length -eq 0){ # nothing found
-        return
-    }
-
     # Remove items that should not be displayed:
     $nl = @()
     foreach($fileOrFolder in $filesAndFolders){
