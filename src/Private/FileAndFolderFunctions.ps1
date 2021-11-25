@@ -34,14 +34,17 @@ function Get-FilesAndFoldersListing{
         [Parameter(Mandatory = $true)]
         [string]$query
     )
+
+
     if($options.showHiddenFiles){
         $filesAndFolders = Get-ChildItem -Path $query -force
     }else{
         $filesAndFolders = Get-ChildItem -Path $query
     }
 
-    
-    if($filesAndFolders.Length -eq 0){ # nothing found
+    $fileCount = ($filesAndFolders | Measure-Object).Count
+
+    if($fileCount -eq 0){ # nothing found
         return
     }
 
