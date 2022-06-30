@@ -114,7 +114,7 @@ function Get-GitColorAndIcon{
     }
 
     if($hideIcons){
-        $gitGlyph = "√";
+        $gitGlyph = "$([char]0x221a)";
     }else{
         $gitGlyph = $glyphs["nf-fa-check"]
     }
